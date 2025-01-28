@@ -2,7 +2,7 @@
     "manifest_version": 3,
     "name": "Pomodoro Timer",
     "version": "1.0",
-    "description": "A Pomodoro timer with focus and break periods, and games during breaks.",
+    "description": "A Pomodoro timer with focus and break periods, and games during breaks, turning your workspace into a fresh break!",
     "permissions": ["alarms", "notifications", "storage"],
     "background": {
       "service_worker": "background.js"
