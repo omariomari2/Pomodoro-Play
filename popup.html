@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pomodoro Timer</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div id="time-selection" class="page">
+    <h1>Pomodoro Timer</h1>
+    <div class="input-group">
+      <label for="focus-time">Focus Time (minutes):</label>
+      <input type="number" id="focus-time" min="1" value="25">
+    </div>
+    <div class="input-group">
+      <label for="break-time">Break Time (minutes):</label>
+      <input type="number" id="break-time" min="1" value="5">
+    </div>
+    <button id="start-timer" class="glow-button">Start Timer</button>
+  </div>
+
+  <div id="timer-progression" class="page hidden">
+    <h1>Time Remaining</h1>
+    <div class="progress-bar">
+      <div id="progress" class="progress"></div>
+    </div>
+    <div class="timer-circle">
+      <span id="time-left">25:00</span>
+    </div>
+    <div class="button-group">
+      <button id="pause-timer" class="action-button">Pause</button>
+      <button id="reset-timer" class="action-button">Reset</button>
+    </div>
+  </div>
+
+  <div id="break-time" class="page hidden">
+    <h1>Break Time!</h1>
+    <p>Would you like to play a game?</p>
+    <iframe src="rps/rps.html" width="100%" height="300px" style="border: none;"></iframe>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
