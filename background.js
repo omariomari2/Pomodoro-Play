@@ -4,6 +4,8 @@ let timer = null;
 let isPaused = false;
 let breakTime = 0;
 let notificationsEnabled = true;
+let startTime = null;
+let totalTime = null;
 
 // Move the alarm listener outside of startTimer
 chrome.alarms.onAlarm.addListener((alarm) => {
@@ -32,13 +34,23 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.command === 'start') {
     const { focusTime, breakTime: newBreakTime, notificationsEnabled: newNotificationsEnabled } = message;
     timeLeft = focusTime;
+    totalTime = focusTime;
+    startTime = Date.now();
     breakTime = newBreakTime;
     notificationsEnabled = newNotificationsEnabled;
-    startTimer(focusTime, newBreakTime);
+    currentAlarm = 'focus';
+    startTimer();
     sendResponse({ success: true });
     return true;
   } else if (message.command === 'pause') {
     isPaused = !isPaused;
+    if (isPaused) {
+      clearInterval(timer);
+      totalTime = timeLeft;
+    } else {
+      startTime = Date.now();
+      startTimer();
+    }
     sendResponse({ success: true, isPaused });
     return true;
   } else if (message.command === 'reset') {
@@ -51,12 +63,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 });
 
-function startTimer(focusTime, breakTime) {
+function startTimer() {
   clearInterval(timer);
-  chrome.alarms.clearAll();
-  
-  const startTime = Date.now();
-  const totalTime = timeLeft;
   
   timer = setInterval(() => {
     if (!isPaused) {
@@ -65,21 +73,27 @@ function startTimer(focusTime, breakTime) {
       
       if (timeLeft <= 0) {
         clearInterval(timer);
-        handleTimerComplete(focusTime, breakTime);
+        handleTimerComplete();
       }
-      // Broadcast time update to popup if it's open
-      chrome.runtime.sendMessage({ command: 'timeUpdate', timeLeft }).catch(() => {
+
+      chrome.runtime.sendMessage({ 
+        command: 'timeUpdate', 
+        timeLeft 
+      }).catch(() => {
         // Ignore errors when popup is closed
       });
     }
   }, 1000);
 }
 
-function handleTimerComplete(focusTime, breakTime) {
+function handleTimerComplete() {
   clearInterval(timer);
   if (currentAlarm === 'focus') {
-    currentAlarm = 'break';
     timeLeft = breakTime;
+    totalTime = breakTime;
+    startTime = Date.now();
+    currentAlarm = 'break';
+    startTimer();
     
     chrome.runtime.sendMessage({ 
       command: 'showBreak',
@@ -93,15 +107,9 @@ function handleTimerComplete(focusTime, breakTime) {
         title: 'Focus Time Over',
         message: 'Time for a break! Click to play games.',
         requireInteraction: true
-      }, (notificationId) => {
-        chrome.notifications.onClicked.addListener(() => {
-          chrome.notifications.clear(notificationId);
-          chrome.action.openPopup();
-        });
       });
     }
   } else {
-    currentAlarm = 'focus';
     resetTimer();
     chrome.runtime.sendMessage({ command: 'showFocus' });
     
@@ -119,16 +127,14 @@ function handleTimerComplete(focusTime, breakTime) {
 function resetTimer() {
   clearInterval(timer);
   timeLeft = 0;
+  totalTime = 0;
+  startTime = null;
   isPaused = false;
   currentAlarm = null;
-  chrome.alarms.clearAll().catch(err => {
-    console.error('Failed to clear alarms:', err);
-  });
+  chrome.alarms.clearAll();
   chrome.notifications.getAll((notifications) => {
     Object.keys(notifications).forEach(key => {
-      chrome.notifications.clear(key).catch(err => {
-        console.error('Failed to clear notification:', err);
-      });
+      chrome.notifications.clear(key);
     });
   });
 }
