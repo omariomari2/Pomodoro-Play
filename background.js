@@ -1,19 +1,35 @@
+let currentAlarm = null;
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.command === 'start') {
       const { focusTime, breakTime } = message;
       startTimer(focusTime, breakTime);
       sendResponse({ success: true });
+    } else if (message.command === 'reset') {
+      if (currentAlarm) {
+        chrome.alarms.clear(currentAlarm);
+      }
+      chrome.notifications.getAll((notifications) => {
+        Object.keys(notifications).forEach(key => {
+          chrome.notifications.clear(key);
+        });
+      });
     }
   });
   
   function startTimer(focusTime, breakTime) {
+    // Clear any existing alarms
+    chrome.alarms.clearAll();
+    
+    currentAlarm = 'focus';
     chrome.alarms.create('focus', { delayInMinutes: focusTime / 60 });
   
     chrome.alarms.onAlarm.addListener((alarm) => {
       if (alarm.name === 'focus') {
+        currentAlarm = 'break';
         chrome.notifications.create({
           type: 'basic',
-          iconUrl: 'icons/icon128.png',
+          iconUrl: 'icons/icon.png',
           title: 'Focus Time Over',
           message: 'Take a break! Click to start your break timer.'
         }, (notificationId) => {
@@ -23,13 +39,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           });
         });
       } else if (alarm.name === 'break') {
+        currentAlarm = null;
         chrome.notifications.create({
           type: 'basic',
-          iconUrl: 'icons/icon128.png',
+          iconUrl: 'icons/icon.png',
           title: 'Break Time Over',
           message: 'Time to get back to work!'
         });
-        startTimer(focusTime, breakTime); // Restart the cycle
       }
     });
   }
