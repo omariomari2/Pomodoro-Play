@@ -4,22 +4,27 @@ body {
     color: #fff;
     margin: 0;
     padding: 20px;
-    width: 300px;
+    width: 320px;
     height: auto;
+    min-height: 400px;
     overflow: hidden;
     border-radius: 15px; /* Rounded corners */
   }
   
   .page {
+    position: absolute;
+    width: calc(100% - 40px);
+    opacity: 1;
+    transition: opacity 0.3s ease-in-out;
     display: flex;
     flex-direction: column;
     align-items: center;
     text-align: center;
-    padding: 20px; /* Adjusted padding */
   }
   
   .hidden {
-    display: none;
+    opacity: 0;
+    pointer-events: none;
   }
   
   h1 {
@@ -124,4 +129,38 @@ body {
     display: flex;
     gap: 10px;
     width: 100%;
+  }
+  
+  #break-time {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  }
+  
+  #break-time h1 {
+    color: #ffcc00;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+  
+  .game-container {
+    margin-top: 20px;
+    width: 100%;
+    height: 300px;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    transition: transform 0.3s ease;
+  }
+  
+  .game-container:hover {
+    transform: scale(1.02);
+  }
+  
+  iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: rgba(255, 255, 255, 0.05);
   }

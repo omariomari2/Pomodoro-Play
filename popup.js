@@ -19,79 +19,88 @@ document.addEventListener('DOMContentLoaded', () => {
   pauseButton.addEventListener('click', togglePause);
   resetButton.addEventListener('click', resetTimer);
 
+  // Get initial timer state
+  chrome.runtime.sendMessage({ command: 'getTime' }, (response) => {
+    if (response.timeLeft > 0) {
+      showTimerUI();
+      updateTimerDisplay(response.timeLeft);
+      isPaused = response.isPaused;
+      pauseButton.textContent = isPaused ? 'Resume' : 'Pause';
+    }
+  });
+
+  // Listen for time updates from background
+  chrome.runtime.onMessage.addListener((message) => {
+    if (message.command === 'timeUpdate') {
+      updateTimerDisplay(message.timeLeft);
+    } else if (message.command === 'showBreak') {
+      showBreakUI();
+      updateTimerDisplay(message.timeLeft);
+    } else if (message.command === 'showFocus') {
+      timeSelection.classList.remove('hidden');
+      timerProgression.classList.add('hidden');
+      breakTimePage.classList.add('hidden');
+    }
+    return true;
+  });
+
   function startPomodoro() {
     const focusTime = parseInt(document.getElementById('focus-time').value) * 60;
     const breakTime = parseInt(document.getElementById('break-time').value) * 60;
     
-    timeLeft = focusTime;
-    currentMode = 'focus';
-    
-    // Send message to background script
     chrome.runtime.sendMessage({
       command: 'start',
       focusTime: focusTime,
       breakTime: breakTime
     });
 
-    // Update UI
-    timeSelection.classList.add('hidden');
-    timerProgression.classList.remove('hidden');
-    updateTimer();
-    startCountdown();
+    showTimerUI();
   }
 
-  function startCountdown() {
-    if (timer) clearInterval(timer);
-    
-    timer = setInterval(() => {
-      if (!isPaused) {
-        timeLeft--;
-        updateTimer();
-
-        if (timeLeft <= 0) {
-          clearInterval(timer);
-          handleTimerComplete();
-        }
-      }
-    }, 1000);
+  function togglePause() {
+    chrome.runtime.sendMessage({ command: 'pause' }, (response) => {
+      isPaused = response.isPaused;
+      pauseButton.textContent = isPaused ? 'Resume' : 'Pause';
+    });
   }
 
-  function updateTimer() {
-    const minutes = Math.floor(timeLeft / 60);
-    const seconds = timeLeft % 60;
-    timeLeftDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  function resetTimer() {
+    chrome.runtime.sendMessage({ command: 'reset' }, () => {
+      timeSelection.classList.remove('hidden');
+      timerProgression.classList.add('hidden');
+      breakTimePage.classList.add('hidden');
+    });
+  }
+
+  function updateTimerDisplay(seconds) {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    timeLeftDisplay.textContent = 
+      `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
     
+    // Update progress bar
     const totalTime = currentMode === 'focus' 
       ? parseInt(document.getElementById('focus-time').value) * 60
       : parseInt(document.getElementById('break-time').value) * 60;
     
-    const progress = (timeLeft / totalTime) * 100;
+    const progress = (seconds / totalTime) * 100;
     progressBar.style.width = `${progress}%`;
   }
 
-  function togglePause() {
-    isPaused = !isPaused;
-    pauseButton.textContent = isPaused ? 'Resume' : 'Pause';
+  function showTimerUI() {
+    timeSelection.classList.add('hidden');
+    timerProgression.classList.remove('hidden');
   }
 
-  function resetTimer() {
-    clearInterval(timer);
-    timeSelection.classList.remove('hidden');
+  function showBreakUI() {
+    timeSelection.classList.add('hidden');
     timerProgression.classList.add('hidden');
-    breakTimePage.classList.add('hidden');
-    isPaused = false;
-    chrome.runtime.sendMessage({ command: 'reset' });
-  }
-
-  function handleTimerComplete() {
-    if (currentMode === 'focus') {
-      timerProgression.classList.add('hidden');
-      breakTimePage.classList.remove('hidden');
-      currentMode = 'break';
-      timeLeft = parseInt(document.getElementById('break-time').value) * 60;
-      startCountdown();
-    } else {
-      resetTimer();
-    }
+    breakTimePage.classList.remove('hidden');
+    
+    // Add smooth transition
+    breakTimePage.style.opacity = '0';
+    requestAnimationFrame(() => {
+      breakTimePage.style.opacity = '1';
+    });
   }
 }); 
