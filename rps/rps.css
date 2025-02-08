@@ -1,15 +1,21 @@
+body::-webkit-scrollbar {
+  display: none;
+}
+
 body {
-    font-family: 'Arial', sans-serif;
-    background: linear-gradient(135deg, #1e3c72, #2a5298);
-    color: #fff;
-    margin: 0;
-    padding: 10px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100%;
-  }
-  
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+  font-family: 'Arial', sans-serif;
+  background: linear-gradient(135deg, #1e3c72, #2a5298);
+  color: #fff;
+  margin: 0;
+  padding: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+}
+
 .container {
   text-align: center;
   background: rgba(255, 255, 255, 0.1);
