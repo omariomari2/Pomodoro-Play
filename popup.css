@@ -12,7 +12,7 @@ body {
 .page {
     position: relative;
     width: calc(100% - 40px);
-    opacity: 1; height: 150px;
+    opacity: 1; height: 200px;
     border-radius: 10px;
     transition: opacity 0.3s ease-in-out;
     display: flex;
