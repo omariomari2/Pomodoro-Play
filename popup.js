@@ -13,11 +13,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const resetButton = document.getElementById('reset-timer');
   const timeLeftDisplay = document.getElementById('time-left');
   const progressBar = document.getElementById('progress');
+  const notificationsEnabled = document.getElementById('notifications-enabled');
 
   // Add event listeners
   startButton.addEventListener('click', startPomodoro);
   pauseButton.addEventListener('click', togglePause);
   resetButton.addEventListener('click', resetTimer);
+  notificationsEnabled.addEventListener('change', () => {
+    chrome.storage.local.set({ notificationsEnabled: notificationsEnabled.checked });
+  });
 
   // Get initial timer state
   chrome.runtime.sendMessage({ command: 'getTime' }, (response) => {
@@ -27,6 +31,11 @@ document.addEventListener('DOMContentLoaded', () => {
       isPaused = response.isPaused;
       pauseButton.textContent = isPaused ? 'Resume' : 'Pause';
     }
+  });
+
+  // Load notification preference
+  chrome.storage.local.get(['notificationsEnabled'], (result) => {
+    notificationsEnabled.checked = result.notificationsEnabled !== false;
   });
 
   // Listen for time updates from background
@@ -60,7 +69,8 @@ document.addEventListener('DOMContentLoaded', () => {
     chrome.runtime.sendMessage({
       command: 'start',
       focusTime: focusTime,
-      breakTime: breakTime
+      breakTime: breakTime,
+      notificationsEnabled: notificationsEnabled.checked
     });
 
     showTimerUI();

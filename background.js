@@ -3,6 +3,7 @@ let timeLeft = 0;
 let timer = null;
 let isPaused = false;
 let breakTime = 0;
+let notificationsEnabled = true;
 
 // Move the alarm listener outside of startTimer
 chrome.alarms.onAlarm.addListener((alarm) => {
@@ -29,9 +30,10 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.command === 'start') {
-    const { focusTime, breakTime: newBreakTime } = message;
+    const { focusTime, breakTime: newBreakTime, notificationsEnabled: newNotificationsEnabled } = message;
     timeLeft = focusTime;
     breakTime = newBreakTime;
+    notificationsEnabled = newNotificationsEnabled;
     startTimer(focusTime, newBreakTime);
     sendResponse({ success: true });
     return true;
@@ -79,34 +81,38 @@ function handleTimerComplete(focusTime, breakTime) {
     currentAlarm = 'break';
     timeLeft = breakTime;
     
-    // Notify all open popups to show break UI
     chrome.runtime.sendMessage({ 
       command: 'showBreak',
       timeLeft: breakTime
     });
     
-    chrome.notifications.create({
-      type: 'basic',
-      iconUrl: 'icons/icon.png',
-      title: 'Focus Time Over',
-      message: 'Time for a break! Click to play games.',
-      requireInteraction: true
-    }, (notificationId) => {
-      chrome.notifications.onClicked.addListener(() => {
-        chrome.notifications.clear(notificationId);
-        chrome.action.openPopup();
+    if (notificationsEnabled) {
+      chrome.notifications.create({
+        type: 'basic',
+        iconUrl: 'icons/icon.png',
+        title: 'Focus Time Over',
+        message: 'Time for a break! Click to play games.',
+        requireInteraction: true
+      }, (notificationId) => {
+        chrome.notifications.onClicked.addListener(() => {
+          chrome.notifications.clear(notificationId);
+          chrome.action.openPopup();
+        });
       });
-    });
+    }
   } else {
     currentAlarm = 'focus';
     resetTimer();
     chrome.runtime.sendMessage({ command: 'showFocus' });
-    chrome.notifications.create({
-      type: 'basic',
-      iconUrl: 'icons/icon.png',
-      title: 'Break Time Over',
-      message: 'Time to get back to work!'
-    });
+    
+    if (notificationsEnabled) {
+      chrome.notifications.create({
+        type: 'basic',
+        iconUrl: 'icons/icon.png',
+        title: 'Break Time Over',
+        message: 'Time to get back to work!'
+      });
+    }
   }
 }
 
