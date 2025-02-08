@@ -6,8 +6,8 @@ body {
     padding: 20px;
     width: 320px;
     min-width: fit-content;
-    height: 300px;
-    padding-bottom: 20px;
+    height: 200px;
+    padding-bottom: 10px;
     overflow-x: hidden;
     overflow-y: hidden;
     border-radius: 15px;
