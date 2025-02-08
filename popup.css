@@ -6,13 +6,13 @@ body {
     padding: 20px;
     width: 320px;
     height: auto;
-    min-height: 400px;
+    min-height: fit-content; padding-bottom: 20px;
     overflow: hidden;
     border-radius: 15px; /* Rounded corners */
   }
   
 .page {
-  position: absolute;
+  position: absolute; min-width: fit-content;
   width: calc(100% - 10px);
   opacity: 1; border-radius: 10px;
   transition: opacity 0.3s ease-in-out;
@@ -45,7 +45,7 @@ label {
 }
 
 input {
-  width: 100%;
+  width: 80%;
   padding: 10px;
   border: none;
   border-radius: 5px;
@@ -92,7 +92,7 @@ button:hover {
 .progress {
   height: 100%;
   background: linear-gradient(135deg, #ff6f61, #ffcc00);
-  width: 100%;
+  width: 80%;
   border-radius: 5px;
   transition: width 1s linear;
 }
