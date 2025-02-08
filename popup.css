@@ -5,14 +5,13 @@ body {
     margin: 0;
     padding: 20px;
     width: 320px;
-    height: auto;
+    height: fit-content;
     min-width: fit-content;
-    max-height: fit-content;
+    max-height: 500px;
     padding-bottom: 20px;
-    overflow-x: scroll;
-    overflow-y: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
     border-radius: 15px;
-    max-height: 600px;
 }
 
 .page {
@@ -22,11 +21,11 @@ body {
     border-radius: 10px;
     transition: opacity 0.3s ease-in-out;
     display: flex;
-    padding: 20px;
+    padding: 10px;
     flex-direction: column;
     align-items: center;
     text-align: center;
-    margin-bottom: 20px;
+    margin-bottom: 10px;
 }
 
 .hidden {
@@ -34,10 +33,20 @@ body {
   pointer-events: none;
 }
 
+@keyframes back-color{
+  0% {
+    background: linear-gradient(135deg, #2a5298, #cdd7e7);
+  }
+  100% {
+    background: linear-gradient(135deg, #cdd7e7, #2a5298);
+  }
+}
+
 h1 {
-  font-size: 1.5rem;
+  font-size: 1.5rem; animation: back-color 2s infinite;
   margin-bottom: 20px;
 }
+
 
 .input-group {
   margin-bottom: 15px;
@@ -93,7 +102,7 @@ button:hover {
   height: 10px;
   background: rgba(255, 255, 255, 0.2);
   border-radius: 5px;
-  margin: 20px 0;
+  margin: 10px 0;
   overflow: hidden;
 }
 
@@ -106,14 +115,14 @@ button:hover {
 }
 
 .timer-circle {
-  width: 100px;
-  height: 100px;
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.1);
   display: flex;
   justify-content: center;
   align-items: center;
-  margin: 20px 0;
+  margin: 10px 0;
   animation: pulse 2s infinite;
 }
 
@@ -161,9 +170,9 @@ button:hover {
 }
 
 .game-container {
-  margin-top: 20px;
+  margin-top: 10px;
   width: 100%;
-  height: 300px;
+  height: 250px;
   border-radius: 10px;
   overflow: hidden;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
