@@ -190,17 +190,18 @@ iframe {
 
 footer {
     font-size: 0.8rem;
-    color: black;
+    color: black; 
     text-align: center;
     padding: 5px 10px;
     position: absolute;
-    bottom: 0;
+    bottom: 0; text-align: center;
     width: calc(100% - 20px);
 }
 
 footer p {
     margin: 0;
-    line-height: 1.3;
+    line-height: 1.4;
+    font-family: Arial;
 }
 
 footer .description {
