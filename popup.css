@@ -7,10 +7,10 @@ body {
     width: 320px;
     height: auto;
     min-width: fit-content;
-    min-height: fit-content;
+    max-height: fit-content;
     padding-bottom: 20px;
-    overflow-x: hidden;
-    overflow-y: auto;
+    overflow-x: scroll;
+    overflow-y: hidden;
     border-radius: 15px;
     max-height: 600px;
 }
