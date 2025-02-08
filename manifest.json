@@ -4,6 +4,7 @@
     "version": "1.0",
     "description": "A Pomodoro timer with focus and break periods, and games during breaks, turning your workspace into a fresh break!",
     "permissions": ["alarms", "notifications", "storage"],
+    "host_permissions": ["<all_urls>"],
     "background": {
       "service_worker": "background.js"
     },
