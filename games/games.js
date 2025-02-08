@@ -4,8 +4,12 @@
 //   });
   
 document.getElementById('rock-paper-scissors').addEventListener('click', () => {
-  // Navigate to RPS game
-  window.location.href = '../rps/rps.html';
+  try {
+    window.location.href = '../rps/rps.html';
+  } catch (error) {
+    console.error('Failed to navigate to RPS game:', error);
+    // Maybe show a user-friendly error message
+  }
 });
   
   // document.getElementById('typing-game').addEventListener('click', () => {

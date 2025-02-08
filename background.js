@@ -74,6 +74,7 @@ function startTimer(focusTime, breakTime) {
 }
 
 function handleTimerComplete(focusTime, breakTime) {
+  clearInterval(timer);
   if (currentAlarm === 'focus') {
     currentAlarm = 'break';
     timeLeft = breakTime;

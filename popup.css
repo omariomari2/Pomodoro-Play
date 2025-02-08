@@ -3,27 +3,24 @@ body {
     background: linear-gradient(135deg, #1e3c72, #2a5298);
     color: #fff;
     margin: 0;
-    padding: 20px; overflow-x: hidden;
-    overflow-y: hidden;
+    padding: 20px;
+    overflow: hidden;
     width: 320px;
     min-width: fit-content;
-
 }
 
 .page {
     position: relative;
     width: calc(100% - 40px);
     opacity: 1; height: fit-content;
-    border-radius: 10px;
     transition: opacity 0.3s ease-in-out;
     display: flex;
-    padding: 10px; overflow: hidden;
+    padding: 10px;
     flex-direction: column;
     align-items: center;
     text-align: center;
     margin-bottom: 10px;
     border-radius: 15px;
-
 }
 
 .hidden {
@@ -33,10 +30,16 @@ body {
 
 @keyframes coloring{
   0%, 50% {
-    color: linear-gradient(135deg, #2a5298, #cdd7e7);
+    background: linear-gradient(135deg, #2a5298, #cdd7e7);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
   }
   50%, 100% {
-    color: linear-gradient(135deg, #cdd7e7, #2a5298);
+    background: linear-gradient(135deg, #cdd7e7, #2a5298);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
   }
 }
 
