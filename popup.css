@@ -8,9 +8,6 @@ body {
     min-width: fit-content;
     height: 200px;
     padding-bottom: 10px;
-    overflow-x: hidden;
-    overflow-y: hidden;
-    border-radius: 15px;
 }
 
 .page {
@@ -25,6 +22,9 @@ body {
     align-items: center;
     text-align: center;
     margin-bottom: 10px;
+    border-radius: 15px;
+    overflow-x: hidden;
+    overflow-y: hidden;
 }
 
 .hidden {
