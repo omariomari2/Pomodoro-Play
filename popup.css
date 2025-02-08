@@ -32,7 +32,7 @@ body {
 }
 
 @keyframes coloring{
-  0%, 25% {
+  0%, 50% {
     color: linear-gradient(135deg, #2a5298, #cdd7e7);
   }
   50%, 100% {
@@ -189,8 +189,8 @@ iframe {
 }
 
 footer {
-    font-size: 0.6rem;
-    color: black; 
+    font-size: 0.6rem; display: grid;
+    color: black;  place-items: center;
     text-align: center;
     padding: 5px 10px;
     position: absolute;
