@@ -33,6 +33,15 @@ document.addEventListener('DOMContentLoaded', () => {
   chrome.runtime.onMessage.addListener((message) => {
     if (message.command === 'timeUpdate') {
       updateTimerDisplay(message.timeLeft);
+      if (currentMode === 'break') {
+        const breakTimeLeft = document.getElementById('break-time-left');
+        if (breakTimeLeft) {
+          const minutes = Math.floor(message.timeLeft / 60);
+          const seconds = message.timeLeft % 60;
+          breakTimeLeft.textContent = 
+            `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+      }
     } else if (message.command === 'showBreak') {
       showBreakUI();
       updateTimerDisplay(message.timeLeft);
@@ -96,6 +105,16 @@ document.addEventListener('DOMContentLoaded', () => {
     timeSelection.classList.add('hidden');
     timerProgression.classList.add('hidden');
     breakTimePage.classList.remove('hidden');
+    currentMode = 'break';
+    
+    // Update break timer display
+    const breakTimeLeft = document.getElementById('break-time-left');
+    if (breakTimeLeft) {
+      const minutes = Math.floor(timeLeft / 60);
+      const seconds = timeLeft % 60;
+      breakTimeLeft.textContent = 
+        `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
     
     // Add smooth transition
     breakTimePage.style.opacity = '0';

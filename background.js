@@ -77,7 +77,6 @@ function handleTimerComplete(focusTime, breakTime) {
   if (currentAlarm === 'focus') {
     currentAlarm = 'break';
     timeLeft = breakTime;
-    startTimer(focusTime, breakTime);
     
     // Notify all open popups to show break UI
     chrome.runtime.sendMessage({ 
@@ -89,9 +88,13 @@ function handleTimerComplete(focusTime, breakTime) {
       type: 'basic',
       iconUrl: 'icons/icon.png',
       title: 'Focus Time Over',
-      message: 'Time for a break! Click to view break activities.'
+      message: 'Time for a break! Click to play games.',
+      requireInteraction: true
     }, (notificationId) => {
-      handleNotificationClick(notificationId);
+      chrome.notifications.onClicked.addListener(() => {
+        chrome.notifications.clear(notificationId);
+        chrome.action.openPopup();
+      });
     });
   } else {
     currentAlarm = 'focus';
