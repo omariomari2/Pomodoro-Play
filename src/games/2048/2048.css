@@ -1,0 +1,112 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #faf8ef;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.game-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.grid-container {
+    display: grid;
+    grid-template-columns: repeat(4, 100px);
+    grid-template-rows: repeat(4, 100px);
+    gap: 10px;
+    position: relative;
+}
+
+.grid-item {
+    width: 100px;
+    height: 100px;
+    background-color: #ccc0b3;
+    border-radius: 5px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 2rem;
+    font-weight: bold;
+    color: white;
+    transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.game-info {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.score {
+    margin-top: 10px;
+    font-size: 1.5rem;
+}
+
+button {
+    margin-top: 20px;
+    padding: 10px 20px;
+    font-size: 1rem;
+    cursor: pointer;
+    background-color: #8f7a66;
+    color: white;
+    border: none;
+    border-radius: 5px;
+}
+
+button:hover {
+    background-color: #6e4b3a;
+}
+
+#tile-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: calc(4 * 100px + 3 * 10px);
+    height: calc(4 * 100px + 3 * 10px);
+    pointer-events: none;
+    z-index: 1;
+}
+
+.tile {
+    position: absolute;
+    width: 100px;
+    height: 100px;
+    border-radius: 5px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 2rem;
+    font-weight: bold;
+    color: white;
+    transition: transform 0.3s ease, top 0.3s ease, left 0.3s ease, background-color 0.3s ease;
+    transform: scale(1);
+}
+
+.tile.new-tile {
+    transform: scale(0);
+}
+
+#game-over {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: calc(4 * 100px + 3 * 10px);
+    height: calc(4 * 100px + 3 * 10px);
+    background-color: rgba(238, 228, 218, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 2.5rem;
+    color: #776e65;
+    z-index: 2;
+    display: none;
+}

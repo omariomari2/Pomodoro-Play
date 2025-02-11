@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Timer</title>
+  <link rel="stylesheet" href="../../pages/timer/timer.css">
+</head>
+<body>
+  <div class="container">
+    <div class="flex flex-col items-center gap-4">
+      <h1 class="text-2xl">Timer Running</h1>
+      <div id="timerType" class="timer-type">Work Time</div>
+      <div class="timer-display" id="display">00:00</div>
+      <div class="progress-container">
+        <div class="progress-bar" id="progress"></div>
+      </div>
+      <div class="button-container">
+        <button id="pauseTimer" class="btn btn-primary">Pause</button>
+        <button id="stopTimer" class="btn btn-secondary">Stop</button>
+      </div>
+    </div>
+  </div>
+  <audio id="alarmSound" src="../../assets/audio/alarm.mp3"></audio>
+  <script src="../../pages/timer/timer.js"></script>
+</body>
+</html> 
