@@ -8,12 +8,6 @@ A Chrome extension that combines the Pomodoro Technique with mini-games for your
 
 ### Screenshots
 
-<div align="center">
-  <img src="src/assets/demo/timer.png" alt="Timer Interface" width="280">
-  <img src="src/assets/demo/snake-game.png" alt="Snake Game" width="280">
-  <img src="src/assets/demo/2048-game.png" alt="2048 Game" width="280">
-</div>
-
 ## Features
 
 ### Timer Functions
