@@ -4,7 +4,7 @@ A Chrome extension that combines the Pomodoro Technique with mini-games for your
 
 ## Demo
 
-![Pomodoro Play Demo](src/assets/demo/demo.gif)
+https://github.com/yourusername/pomodoro-play/assets/demo/demo.mp4
 
 ### Screenshots
 
