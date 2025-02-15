@@ -1,0 +1,8 @@
+/* Update background color */
+body {
+  background-color: #f3f4f6;  /* Light gray background */
+}
+
+.container {
+  background-color: white;  /* Keep container background white for contrast */
+} 

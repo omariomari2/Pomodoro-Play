@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Three.js 3D Object Example</title>
+    <style>
+      body { margin: 0; overflow: hidden; display: flex; flex-direction: column; align-items: center; }
+      #canvas-container { width: 100vw; height: 80vh; }
+      #controls { margin-top: 10px; }
+      button { 
+        margin: 5px; 
+        padding: 10px 20px; 
+        font-size: 16px; 
+        cursor: pointer; 
+        border-radius: 20px; 
+        border: none; 
+        background-color: #007BFF; 
+        color: white; 
+        transition: background-color 0.3s, transform 0.3s;
+      }
+      button:hover {
+        background-color: #0056b3;
+        transform: scale(1.05);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="canvas-container"></div>
+    <div id="controls">
+      <button onclick="previousShape()">Previous</button>
+      <button onclick="nextShape()">Next</button>
+      <button onclick="scaleObject(1.1)">Scale Up</button>
+      <button onclick="scaleObject(0.9)">Scale Down</button>
+      <button onclick="pauseSpin()">Pause Spin</button>
+      <button onclick="resumeSpin()">Resume Spin</button>
+    </div>
+    <!-- Include local Three.js files -->
+    <script src="../../lib/three/three.min.js"></script>
+    <script src="../../lib/three/DragControls.js"></script>
+    <!-- Load external JavaScript file -->
+    <script src="main.js"></script>
+  </body>
+</html> 
