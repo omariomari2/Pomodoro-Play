@@ -317,4 +317,61 @@ body.minimized .container {
   font-size: 0.85rem;
   font-weight: 600;
   color: #1f2937;
+}
+
+/* Todo List Styles */
+#todo-container {
+  background: white;
+  border-radius: 8px;
+  padding: 15px;
+}
+
+#task-input {
+  width: 80%;
+  padding: 8px;
+  margin-right: 5px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+#add-task {
+  padding: 8px 15px;
+  background: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+#add-task:hover {
+  background: #45a049;
+}
+
+.task-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.task-item input[type="checkbox"] {
+  margin-right: 10px;
+}
+
+.task-item.completed span {
+  text-decoration: line-through;
+  color: #888;
+}
+
+.delete-task {
+  margin-left: auto;
+  color: #ff4444;
+  cursor: pointer;
+  border: none;
+  background: none;
+  padding: 5px;
+}
+
+.hidden {
+  display: none !important;
 } 

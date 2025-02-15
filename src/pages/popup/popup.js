@@ -135,6 +135,117 @@ document.addEventListener('DOMContentLoaded', () => {
     sendResponse({ received: true });
   });
 
+  // Todo List Implementation
+  const todoToggle = document.getElementById('todo-toggle');
+  const todoList = document.getElementById('todo-list');
+  const taskInput = document.getElementById('task-input');
+  const addTaskButton = document.getElementById('add-task');
+  const tasksList = document.getElementById('tasks-list');
+
+  todoToggle.addEventListener('mouseenter', () => {
+    todoToggle.style.opacity = '1';
+  });
+
+  todoToggle.addEventListener('mouseleave', () => {
+    todoToggle.style.opacity = '0.3';
+  });
+
+  todoToggle.addEventListener('click', () => {
+    todoList.classList.toggle('hidden');
+  });
+
+  // Load existing tasks
+  loadTasks();
+
+  // Add task on button click
+  addTaskButton.addEventListener('click', addTask);
+
+  // Add task on Enter key
+  taskInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      addTask();
+    }
+  });
+
+  function addTask() {
+    const taskText = taskInput.value.trim();
+    if (taskText === '') return;
+
+    const task = {
+      id: Date.now(),
+      text: taskText,
+      completed: false
+    };
+
+    // Save to storage and update UI
+    chrome.storage.sync.get(['tasks'], (result) => {
+      const tasks = result.tasks || [];
+      tasks.push(task);
+      chrome.storage.sync.set({ tasks }, () => {
+        createTaskElement(task);
+        taskInput.value = '';
+      });
+    });
+  }
+
+  function loadTasks() {
+    chrome.storage.sync.get(['tasks'], (result) => {
+      const tasks = result.tasks || [];
+      tasks.forEach(task => createTaskElement(task));
+    });
+  }
+
+  function createTaskElement(task) {
+    const taskElement = document.createElement('div');
+    taskElement.className = `task-item ${task.completed ? 'completed' : ''}`;
+    taskElement.dataset.id = task.id;
+
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.checked = task.completed;
+    checkbox.addEventListener('change', () => toggleTask(task.id));
+
+    const taskText = document.createElement('span');
+    taskText.textContent = task.text;
+
+    const deleteButton = document.createElement('button');
+    deleteButton.className = 'delete-task';
+    deleteButton.textContent = '\u2212';
+    deleteButton.addEventListener('click', () => deleteTask(task.id));
+    deleteButton.addEventListener('mouseover', () => deleteButton.style.backgroundColor = '#ffcccc');
+    deleteButton.addEventListener('mouseout', () => deleteButton.style.backgroundColor = '');
+
+    taskElement.appendChild(checkbox);
+    taskElement.appendChild(taskText);
+    taskElement.appendChild(deleteButton);
+    tasksList.appendChild(taskElement);
+  }
+
+  function toggleTask(taskId) {
+    chrome.storage.sync.get(['tasks'], (result) => {
+      const tasks = result.tasks || [];
+      const taskIndex = tasks.findIndex(t => t.id === taskId);
+      if (taskIndex > -1) {
+        tasks[taskIndex].completed = !tasks[taskIndex].completed;
+        chrome.storage.sync.set({ tasks }, () => {
+          const taskElement = document.querySelector(`[data-id="${taskId}"]`);
+          taskElement.classList.toggle('completed');
+        });
+      }
+    });
+  }
+
+  function deleteTask(taskId) {
+    chrome.storage.sync.get(['tasks'], (result) => {
+      const tasks = result.tasks || [];
+      const updatedTasks = tasks.filter(t => t.id !== taskId);
+      chrome.storage.sync.set({ tasks: updatedTasks }, () => {
+        const taskElement = document.querySelector(`[data-id="${taskId}"]`);
+        taskElement.remove();
+      });
+    });
+  }
+
   function initializeTimer() {
     chrome.storage.local.get(['timeLeft', 'totalTime', 'isPaused', 'currentTimer'], (result) => {
       console.log('Initializing timer with state:', result);
