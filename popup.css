@@ -1,0 +1,29 @@
+#new-task {
+  width: 207px;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px 0 0 4px;  /* Round only left corners */
+  box-sizing: border-box;
+  margin: 0;
+}
+
+#add-task {
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-left: none;  /* Remove left border to connect with input */
+  border-radius: 0 4px 4px 0;  /* Round only right corners */
+  background-color: #4a69bd;
+  color: white;
+  cursor: pointer;
+  margin: 0;
+  height: 35px;  /* Match input height */
+  display: flex;
+  align-items: center;
+}
+
+.input-container {
+  display: flex;
+  align-items: center;
+  width: fit-content;
+  margin-bottom: 10px;
+} 
