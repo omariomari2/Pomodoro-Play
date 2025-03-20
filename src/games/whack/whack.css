@@ -1,0 +1,88 @@
+body {
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: #1a1a2e;
+    font-family: 'Press Start 2P', cursive;
+}
+
+.game-container {
+    text-align: center;
+}
+
+.game-info {
+    margin-bottom: 20px;
+    color: white;
+}
+
+h2 {
+    color: #e94560;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.stats {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin: 20px 0;
+    font-size: 1.2em;
+}
+
+.start-btn {
+    padding: 15px 30px;
+    font-size: 1em;
+    font-family: 'Press Start 2P', cursive;
+    background: #e94560;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    margin: 10px 0;
+    transition: all 0.3s ease;
+}
+
+.start-btn:hover {
+    transform: scale(1.05);
+    background: #ff4d79;
+}
+
+.game-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+}
+
+.hole {
+    background: #2a2a4a;
+    border-radius: 50%;
+    aspect-ratio: 1;
+    position: relative;
+    overflow: hidden;
+}
+
+.mole {
+    width: 100%;
+    height: 100%;
+    background: #4CAF50;
+    border-radius: 50%;
+    position: absolute;
+    bottom: -100%;
+    transition: bottom 0.1s;
+    cursor: pointer;
+}
+
+.mole.up {
+    bottom: 0;
+}
+
+.mole.bonked {
+    background: #e94560;
+} 
