@@ -1,0 +1,82 @@
+body {
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: #1a1a2e;
+    font-family: 'Arial', sans-serif;
+}
+
+.game-container {
+    text-align: center;
+}
+
+.game-info {
+    margin-bottom: 20px;
+    color: white;
+}
+
+.stats {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin: 10px 0;
+    font-size: 1.2em;
+}
+
+.restart-btn {
+    padding: 10px 20px;
+    font-size: 1em;
+    background: #e94560;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin: 10px 0;
+}
+
+.restart-btn:hover {
+    background: #ff4d79;
+}
+
+.memory-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.card {
+    aspect-ratio: 3/4;
+    background: #16213e;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+.card:hover {
+    transform: scale(1.02);
+}
+
+.card.flipped {
+    background: #e94560;
+    transform: rotateY(180deg);
+}
+
+.card.matched {
+    background: #4CAF50;
+    cursor: default;
+}
+
+.card span {
+    display: none;
+    font-size: 2em;
+    color: white;
+}
+
+.card.flipped span {
+    display: block;
+} 
