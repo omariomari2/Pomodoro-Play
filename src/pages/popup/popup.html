@@ -30,17 +30,15 @@
     </div>
   </div>
 
-  <button id="todo-toggle" style="
-    position: fixed;
-    top: 10px;
-    left: 10px;
-    padding: 8px;
-    background: rgba(76, 175, 80, 0.3);
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: opacity 0.3s;
-    z-index: 1000;">+</button>
+  <div class="header-controls">
+    <button id="todo-toggle" class="control-button">+</button>
+    <button id="toggleView" class="control-button" aria-label="Toggle view">
+      <svg class="chevron-down" width="8" height="8" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+      </svg>
+    </button>
+  </div>
+
   <div id="inputPage" class="page">
     <div class="container">
       <div class="flex flex-col items-center gap-4">
@@ -81,14 +79,6 @@
   </div>
 
   <div id="timerPage" class="page hidden">
-    <div class="minimize-toggle">
-      <button id="toggleView" class="toggle-btn" aria-label="Toggle view">
-        <svg class="chevron-down" width="8" height="8" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-        </svg>
-      </button>
-    </div>
-    
     <div id="timerContent" class="timer-content expanded">
       <div class="container">
         <div class="flex flex-col items-center gap-4">
@@ -102,7 +92,7 @@
             <div class="progress-bar" id="progress"></div>
           </div>
 
-          <div class="button-container">
+          <div class="button-container" style="margin-top: 6px;">
             <button id="pauseTimer" class="btn btn-primary">Pause</button>
             <button id="openGamesButton" class="btn btn-primary hidden">Play Games</button>
             <button id="stopTimer" class="btn btn-secondary">Stop</button>

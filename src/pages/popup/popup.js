@@ -84,6 +84,12 @@ document.addEventListener('DOMContentLoaded', () => {
   
   toggleBtn.addEventListener('click', () => {
     body.classList.toggle('minimized');
+    // Update toggle button icon rotation
+    if (body.classList.contains('minimized')) {
+      toggleBtn.style.transform = 'rotate(180deg)';
+    } else {
+      toggleBtn.style.transform = 'rotate(0deg)';
+    }
     // Store preference
     chrome.storage.local.set({
       isMinimized: body.classList.contains('minimized')
@@ -94,6 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
   chrome.storage.local.get(['isMinimized'], (result) => {
     if (result.isMinimized) {
       body.classList.add('minimized');
+      toggleBtn.style.transform = 'rotate(180deg)';
     }
   });
 
@@ -162,7 +169,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   todoToggle.addEventListener('mouseleave', () => {
-    todoToggle.style.opacity = '0.3';
+    todoToggle.style.opacity = '0.7';
   });
 
   todoToggle.addEventListener('click', () => {

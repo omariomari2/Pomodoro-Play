@@ -212,6 +212,9 @@ function handleTimerComplete(timerType) {
     case 'break':
       // Break ended
       if (currentCycle < totalCycles) {
+        // Show notification for completed cycle
+        createCycleCompletionNotification(currentCycle);
+        
         // Start next cycle
         currentCycle++;
         
@@ -254,6 +257,9 @@ function handleTimerComplete(timerType) {
           });
         });
       } else {
+        // Final cycle complete notification
+        createCycleCompletionNotification(currentCycle, true);
+        
         // All cycles completed
         notificationOptions.title = 'All Cycles Complete!';
         notificationOptions.message = 'You have completed all your pomodoro cycles!';
@@ -275,6 +281,29 @@ function handleTimerComplete(timerType) {
   // Create the notification
   chrome.notifications.create(`timer-${timerType}-complete`, notificationOptions, (notificationId) => {
     console.log('Created notification:', notificationId);
+  });
+}
+
+// Add a function to create cycle completion notifications
+function createCycleCompletionNotification(cycleNumber, isFinal = false) {
+  const notificationOptions = {
+    type: 'basic',
+    iconUrl: '../assets/icons/clock1.png',
+    title: isFinal ? 'All Pomodoro Cycles Complete!' : `Cycle ${cycleNumber} Complete!`,
+    message: isFinal 
+      ? `You've finished all ${totalCycles} cycles. Great work!` 
+      : `You've completed cycle ${cycleNumber} of ${totalCycles}. Keep going!`,
+    requireInteraction: false,
+    silent: false
+  };
+  
+  chrome.notifications.create(`cycle-${cycleNumber}-complete`, notificationOptions, (notificationId) => {
+    console.log('Created cycle completion notification:', notificationId);
+    
+    // Auto-dismiss this notification after 5 seconds
+    setTimeout(() => {
+      chrome.notifications.clear(notificationId);
+    }, 5000);
   });
 }
 
@@ -358,7 +387,11 @@ function startTransitionTimer() {
 
 // Handle notification button clicks
 chrome.notifications.onButtonClicked.addListener((notificationId, buttonIndex) => {
-  const [_, timerType, __] = notificationId.split('-');
+  console.log(`Notification ${notificationId} button ${buttonIndex} clicked`);
+  
+  // Extract timer type from notification ID
+  const timerTypeParts = notificationId.split('-');
+  const timerType = timerTypeParts.length > 1 ? timerTypeParts[1] : '';
   
   chrome.storage.local.get(['workTime', 'breakTime'], (result) => {
     switch (timerType) {
@@ -384,12 +417,16 @@ chrome.notifications.onButtonClicked.addListener((notificationId, buttonIndex) =
 
       case 'break':
         if (buttonIndex === 0) {
-          // Start new work session
+          // Start new work session (even if there are more cycles)
           resetWorkTimer();
         } else {
           // Open options to adjust timer
-          openOptionsWindow();
+          chrome.runtime.openOptionsPage();
         }
+        break;
+        
+      default:
+        console.log('Unknown notification type:', timerType);
         break;
     }
     
