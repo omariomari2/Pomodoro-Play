@@ -28,6 +28,11 @@
     "48": "src/assets/icons/clock1.png",
     "128": "src/assets/icons/clock1.png"
   },
+  "content_scripts": [{
+    "matches": ["<all_urls>"],
+    "js": ["src/floating/content_script.js"],
+    "run_at": "document_idle"
+  }],
   "web_accessible_resources": [{
     "resources": [
       "src/games/*",

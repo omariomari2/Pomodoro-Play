@@ -26,4 +26,22 @@
   align-items: center;
   width: fit-content;
   margin-bottom: 10px;
+}
+
+.toggle-container {
+  margin: 8px 0;
+  display: flex;
+  justify-content: center;
+}
+
+.toggle-label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-size: 14px;
+  color: #374151;
+}
+
+.toggle-label input {
+  margin-right: 8px;
 } 

@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const workSecondsInput = document.getElementById('workSeconds');
   const breakMinutesInput = document.getElementById('breakMinutes');
   const breakSecondsInput = document.getElementById('breakSeconds');
+  const floatingIconToggle = document.getElementById('floatingIconToggle');
   
   // Buttons
   const startTimerBtn = document.getElementById('startTimer');
@@ -27,10 +28,23 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initialize timer state
   initializeTimer();
 
+  // Initialize floating icon toggle state
+  initializeFloatingIconToggle();
+
   // Event listeners
   startTimerBtn.addEventListener('click', handleStart);
   pauseButton.addEventListener('click', handlePause);
   stopButton.addEventListener('click', handleStop);
+
+  // Floating icon toggle event listener
+  if (floatingIconToggle) {
+    floatingIconToggle.addEventListener('change', () => {
+      const isChecked = floatingIconToggle.checked;
+      toggleFloatingIcon(isChecked);
+      // Save preference
+      chrome.storage.local.set({ 'floatingIconEnabled': isChecked });
+    });
+  }
 
   // Listen for timer updates and completion
   chrome.runtime.onMessage.addListener((message) => {
@@ -609,5 +623,91 @@ document.addEventListener('DOMContentLoaded', () => {
       if (currentStreakEl) currentStreakEl.textContent = `${stats.currentStreak} day${stats.currentStreak !== 1 ? 's' : ''}`;
       if (lastActiveEl) lastActiveEl.textContent = `Last active: ${formatRelativeDate(stats.lastActiveDate)}`;
     });
+  }
+
+  // Initialize floating icon toggle state from storage
+  function initializeFloatingIconToggle() {
+    const floatingIconToggle = document.getElementById('floatingIconToggle');
+    if (floatingIconToggle) {
+      // Get stored preference
+      chrome.storage.local.get(['floatingIconEnabled'], (result) => {
+        const isEnabled = result.floatingIconEnabled === undefined ? false : result.floatingIconEnabled;
+        floatingIconToggle.checked = isEnabled;
+        
+        // Apply the current state
+        toggleFloatingIcon(isEnabled);
+      });
+    }
+  }
+
+  // Toggle floating icon visibility across all tabs
+  function toggleFloatingIcon(visible) {
+    console.log('Toggling floating icon:', visible);
+    
+    // Show loading indicator on the toggle
+    const floatingIconToggle = document.getElementById('floatingIconToggle');
+    if (floatingIconToggle) {
+      floatingIconToggle.disabled = true;
+      
+      // Add a small delay to ensure the storage change is detected first
+      setTimeout(() => {
+        // Query for all tabs to send the toggle message
+        chrome.tabs.query({}, (tabs) => {
+          console.log(`Found ${tabs.length} tabs to send floating icon toggle`);
+          
+          let successCount = 0;
+          let totalToProcess = 0;
+          
+          tabs.forEach(tab => {
+            console.log(`Processing tab ${tab.id}: ${tab.url && tab.url.substring(0, 50)}...`);
+            
+            // Skip chrome:// and edge:// URLs which can't be injected
+            if (!tab.url || tab.url.startsWith('chrome://') || tab.url.startsWith('edge://')) {
+              console.log(`Skipping tab ${tab.id} - restricted URL`);
+              return;
+            }
+            
+            totalToProcess++;
+            console.log(`Sending toggle message to tab ${tab.id}, visible=${visible}`);
+            try {
+              chrome.tabs.sendMessage(tab.id, { 
+                type: 'TOGGLE_FLOATING_ICON', 
+                visible: visible 
+              }).then(response => {
+                console.log(`Tab ${tab.id} toggle response:`, response);
+                successCount++;
+                if (successCount >= totalToProcess) {
+                  floatingIconToggle.disabled = false;
+                }
+              }).catch(error => {
+                console.log(`Tab ${tab.id} error:`, error.message);
+                // Try to inject the content script directly for failed tabs
+                if (visible) {
+                  chrome.runtime.sendMessage({
+                    type: 'INJECT_FLOATING_ICON',
+                    tabId: tab.id
+                  });
+                }
+                successCount++;
+                if (successCount >= totalToProcess) {
+                  floatingIconToggle.disabled = false;
+                }
+              });
+            } catch (error) {
+              console.log(`Exception sending to tab ${tab.id}:`, error);
+              successCount++;
+              if (successCount >= totalToProcess) {
+                floatingIconToggle.disabled = false;
+              }
+            }
+          });
+          
+          // If no tabs to process, re-enable toggle
+          if (totalToProcess === 0) {
+            floatingIconToggle.disabled = false;
+          }
+        });
+      }, 100);
+    }
   }
 }); 
