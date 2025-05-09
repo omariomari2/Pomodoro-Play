@@ -250,7 +250,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const deleteButton = document.createElement('button');
     deleteButton.className = 'delete-task';
-    deleteButton.textContent = '×';
+    deleteButton.innerHTML = '&times;';
     deleteButton.addEventListener('click', () => deleteTask(task.id));
 
     taskElement.appendChild(checkbox);
@@ -264,12 +264,33 @@ document.addEventListener('DOMContentLoaded', () => {
       const tasks = result.tasks || [];
       const taskIndex = tasks.findIndex(t => t.id === taskId);
       if (taskIndex > -1) {
+        // If task is being marked as completed
+        if (!tasks[taskIndex].completed) {
+          // Update stats when task is completed
+          updateTaskCompletionStats();
+        }
+        
         tasks[taskIndex].completed = !tasks[taskIndex].completed;
         chrome.storage.sync.set({ tasks }, () => {
           const taskElement = document.querySelector(`[data-id="${taskId}"]`);
           taskElement.classList.toggle('completed');
         });
       }
+    });
+  }
+
+  // Update task completion statistics
+  function updateTaskCompletionStats() {
+    console.log("Updating task completion stats");
+    // Send message to background script to update task completion stats
+    chrome.runtime.sendMessage({
+      type: 'UPDATE_STATS',
+      statType: 'taskCompleted',
+      value: 1
+    }, response => {
+      console.log("Stats update response:", response);
+      // Refresh stats immediately for better user feedback
+      loadAndDisplayStats();
     });
   }
 
@@ -491,4 +512,102 @@ document.addEventListener('DOMContentLoaded', () => {
   chrome.runtime.sendMessage({ type: 'DEBUG_TEST' }, (response) => {
     console.log("Debug test response:", response);
   });
+
+  // Stats Panel Implementation
+  const reviewStatsButton = document.getElementById('review-stats');
+  const statsPanel = document.getElementById('stats-panel');
+  const closeStatsButton = document.getElementById('close-stats');
+  
+  // Show stats panel on button click
+  reviewStatsButton.addEventListener('click', (e) => {
+    e.stopPropagation();
+    loadAndDisplayStats();
+    statsPanel.classList.add('visible');
+  });
+  
+  // Close stats panel
+  closeStatsButton.addEventListener('click', () => {
+    statsPanel.classList.remove('visible');
+  });
+  
+  // Close stats panel when clicking outside
+  statsPanel.addEventListener('click', (e) => {
+    if (e.target === statsPanel) {
+      statsPanel.classList.remove('visible');
+    }
+  });
+  
+  // Helper function to format time as HH:MM:SS
+  function formatTimeHHMMSS(seconds) {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+  }
+  
+  // Format date as relative time (today, yesterday, or specific date)
+  function formatRelativeDate(timestamp) {
+    const date = new Date(timestamp);
+    const today = new Date();
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    if (date.toDateString() === today.toDateString()) {
+      return 'Today';
+    } else if (date.toDateString() === yesterday.toDateString()) {
+      return 'Yesterday';
+    } else {
+      return date.toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric' 
+      });
+    }
+  }
+  
+  // Load and display statistics
+  function loadAndDisplayStats() {
+    console.log("Loading and displaying stats");
+    chrome.storage.sync.get(['pomodoroStats'], (result) => {
+      console.log("Retrieved stats:", result.pomodoroStats);
+      const stats = result.pomodoroStats || {
+        totalWorkCycles: 0,
+        tasksCompleted: 0,
+        totalWorkTime: 0,
+        totalBreakTime: 0,
+        totalSessionTime: 0,
+        firstUseDate: Date.now(),
+        lastActiveDate: Date.now(),
+        currentStreak: 1,
+        activityLog: []
+      };
+      
+      // Update statistics display with null checks
+      const totalCyclesEl = document.getElementById('stat-total-cycles');
+      const tasksCompletedEl = document.getElementById('stat-tasks-completed');
+      const workTimeEl = document.getElementById('stat-work-time');
+      const breakTimeEl = document.getElementById('stat-break-time');
+      const totalTimeEl = document.getElementById('stat-total-time');
+      const currentStreakEl = document.getElementById('stat-current-streak');
+      const lastActiveEl = document.getElementById('stat-last-active');
+      
+      console.log("Elements found:", {
+        totalCyclesEl: !!totalCyclesEl,
+        tasksCompletedEl: !!tasksCompletedEl,
+        workTimeEl: !!workTimeEl,
+        breakTimeEl: !!breakTimeEl,
+        totalTimeEl: !!totalTimeEl,
+        currentStreakEl: !!currentStreakEl,
+        lastActiveEl: !!lastActiveEl
+      });
+      
+      if (totalCyclesEl) totalCyclesEl.textContent = stats.totalWorkCycles;
+      if (tasksCompletedEl) tasksCompletedEl.textContent = stats.tasksCompleted;
+      if (workTimeEl) workTimeEl.textContent = formatTimeHHMMSS(stats.totalWorkTime);
+      if (breakTimeEl) breakTimeEl.textContent = formatTimeHHMMSS(stats.totalBreakTime);
+      if (totalTimeEl) totalTimeEl.textContent = formatTimeHHMMSS(stats.totalSessionTime);
+      if (currentStreakEl) currentStreakEl.textContent = `${stats.currentStreak} day${stats.currentStreak !== 1 ? 's' : ''}`;
+      if (lastActiveEl) lastActiveEl.textContent = `Last active: ${formatRelativeDate(stats.lastActiveDate)}`;
+    });
+  }
 }); 

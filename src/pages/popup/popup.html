@@ -28,6 +28,53 @@
         </div>
         <div id="tasks-list" class="tasks-scroll-container">
         </div>
+        <div class="todo-footer">
+          <button id="review-stats" class="review-button">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M7 12H17M7 8H13M7 16H15M3 4H21V20H3V4Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>Review Stats</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats Panel -->
+    <div id="stats-panel" class="stats-panel">
+      <div class="stats-container">
+        <div class="stats-header">
+          <h2>Work Statistics</h2>
+          <button id="close-stats" class="close-stats">&times;</button>
+        </div>
+        <div class="stats-content">
+          <div class="stat-item">
+            <div class="stat-label">Total Work Cycles</div>
+            <div id="stat-total-cycles" class="stat-value">0</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Tasks Completed</div>
+            <div id="stat-tasks-completed" class="stat-value">0</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Total Work Time</div>
+            <div id="stat-work-time" class="stat-value">00:00:00</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Total Break Time</div>
+            <div id="stat-break-time" class="stat-value">00:00:00</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Total Session Time</div>
+            <div id="stat-total-time" class="stat-value">00:00:00</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Current Streak</div>
+            <div id="stat-current-streak" class="stat-value">0 days</div>
+          </div>
+        </div>
+        <div class="stats-footer">
+          <div id="stat-last-active" class="last-active">Last active: Today</div>
+        </div>
       </div>
     </div>
 

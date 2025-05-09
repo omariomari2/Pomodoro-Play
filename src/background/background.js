@@ -43,6 +43,24 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     case 'RESET_WORK':
       resetWorkTimer();
       break;
+    case 'UPDATE_STATS':
+      // Handle stats update from popup
+      if (message.statType && message.value !== undefined) {
+        console.log(`Updating stats: ${message.statType} with value ${message.value}`);
+        
+        // Special handling for task completion
+        if (message.statType === 'taskCompleted') {
+          incrementTaskCompletionCount();
+        } else {
+          updatePomodoroStats(message.statType, message.value);
+        }
+        
+        // Send response back to popup
+        if (sendResponse) {
+          sendResponse({ success: true, statType: message.statType, value: message.value });
+        }
+      }
+      break;
   }
   return true;
 });
@@ -96,12 +114,24 @@ function startTimer(minutes, seconds, timerType) {
   isPaused = false;
   clearInterval(timer);
   
+  // Track statistics
+  if (timerType === 'work') {
+    updatePomodoroStats('workCycleStart', 0);
+  }
+  
   timer = setInterval(() => {
     if (timeLeft <= 0) {
       if (timerType === 'transition') {
         // When transition ends, start break timer
         startBreakTimer();
       } else {
+        // Track statistics for completed timer
+        if (timerType === 'work') {
+          updatePomodoroStats('workTime', totalTime);
+        } else if (timerType === 'break') {
+          updatePomodoroStats('breakTime', totalTime);
+        }
+        
         handleTimerComplete(timerType);
       }
       return;
@@ -433,4 +463,158 @@ chrome.notifications.onButtonClicked.addListener((notificationId, buttonIndex) =
     // Clear the notification after handling the button click
     chrome.notifications.clear(notificationId);
   });
-}); 
+});
+
+// Initialize statistics tracking
+chrome.runtime.onInstalled.addListener(() => {
+  chrome.storage.sync.get(['pomodoroStats'], (result) => {
+    if (!result.pomodoroStats) {
+      const initialStats = {
+        totalWorkCycles: 0,
+        tasksCompleted: 0,
+        totalWorkTime: 0, // in seconds
+        totalBreakTime: 0, // in seconds
+        totalSessionTime: 0, // in seconds
+        firstUseDate: Date.now(),
+        lastActiveDate: Date.now(),
+        currentStreak: 1, // days
+        activityLog: [] // array of daily summaries
+      };
+      chrome.storage.sync.set({ pomodoroStats: initialStats });
+    }
+  });
+});
+
+// Track session start time
+let sessionStartTime = Date.now();
+
+// Helper function to update statistics
+function updatePomodoroStats(statType, value) {
+  chrome.storage.sync.get(['pomodoroStats'], (result) => {
+    const stats = result.pomodoroStats || {
+      totalWorkCycles: 0,
+      tasksCompleted: 0,
+      totalWorkTime: 0,
+      totalBreakTime: 0,
+      totalSessionTime: 0,
+      firstUseDate: Date.now(),
+      lastActiveDate: Date.now(),
+      currentStreak: 1,
+      activityLog: []
+    };
+    
+    // Update last active date and check streak
+    const today = new Date().setHours(0, 0, 0, 0);
+    const lastActive = new Date(stats.lastActiveDate).setHours(0, 0, 0, 0);
+    
+    if (today > lastActive) {
+      // Check if it's consecutive day
+      const dayDiff = Math.floor((today - lastActive) / (1000 * 60 * 60 * 24));
+      if (dayDiff === 1) {
+        // Consecutive day
+        stats.currentStreak += 1;
+      } else if (dayDiff > 1) {
+        // Streak broken
+        stats.currentStreak = 1;
+      }
+    }
+    
+    stats.lastActiveDate = Date.now();
+    
+    // Update specific statistic
+    switch (statType) {
+      case 'workCycleStart':
+        stats.totalWorkCycles += 1;
+        break;
+      case 'taskCompleted':
+        stats.tasksCompleted += 1;
+        break;
+      case 'workTime':
+        stats.totalWorkTime += value;
+        break;
+      case 'breakTime':
+        stats.totalBreakTime += value;
+        break;
+    }
+    
+    // Calculate total session time
+    stats.totalSessionTime = stats.totalWorkTime + stats.totalBreakTime;
+    
+    // Log daily activity
+    const todayStr = new Date().toISOString().split('T')[0];
+    const todayLog = stats.activityLog.find(log => log.date === todayStr);
+    
+    if (todayLog) {
+      // Update existing log for today
+      if (statType === 'workCycleStart') todayLog.cyclesStarted += 1;
+      if (statType === 'taskCompleted') todayLog.tasksCompleted = (todayLog.tasksCompleted || 0) + 1;
+      if (statType === 'workTime') todayLog.workTime += value;
+      if (statType === 'breakTime') todayLog.breakTime += value;
+    } else {
+      // Create new log for today
+      const newLog = {
+        date: todayStr,
+        cyclesStarted: statType === 'workCycleStart' ? 1 : 0,
+        tasksCompleted: statType === 'taskCompleted' ? 1 : 0,
+        workTime: statType === 'workTime' ? value : 0,
+        breakTime: statType === 'breakTime' ? value : 0
+      };
+      stats.activityLog.push(newLog);
+      
+      // Keep only last 30 days in the log
+      if (stats.activityLog.length > 30) {
+        stats.activityLog.shift(); // Remove oldest entry
+      }
+    }
+    
+    chrome.storage.sync.set({ pomodoroStats: stats });
+  });
+}
+
+// Helper function to specifically increment task completion count
+function incrementTaskCompletionCount() {
+  console.log('Incrementing task completion count');
+  
+  chrome.storage.sync.get(['pomodoroStats'], (result) => {
+    const stats = result.pomodoroStats || {
+      totalWorkCycles: 0,
+      tasksCompleted: 0,
+      totalWorkTime: 0,
+      totalBreakTime: 0,
+      totalSessionTime: 0,
+      firstUseDate: Date.now(),
+      lastActiveDate: Date.now(),
+      currentStreak: 1,
+      activityLog: []
+    };
+    
+    // Increment the counter
+    stats.tasksCompleted += 1;
+    console.log(`Tasks completed incremented to: ${stats.tasksCompleted}`);
+    
+    // Update the log for today
+    const todayStr = new Date().toISOString().split('T')[0];
+    const todayLog = stats.activityLog.find(log => log.date === todayStr);
+    
+    if (todayLog) {
+      todayLog.tasksCompleted = (todayLog.tasksCompleted || 0) + 1;
+    } else {
+      stats.activityLog.push({
+        date: todayStr,
+        cyclesStarted: 0,
+        tasksCompleted: 1,
+        workTime: 0,
+        breakTime: 0
+      });
+    }
+    
+    // Save the updated stats
+    chrome.storage.sync.set({ pomodoroStats: stats }, () => {
+      if (chrome.runtime.lastError) {
+        console.error('Error saving task completion stats:', chrome.runtime.lastError);
+      } else {
+        console.log('Task completion stats saved successfully');
+      }
+    });
+  });
+} 
