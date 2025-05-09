@@ -2,12 +2,18 @@ let timer;
 let timeLeft;
 let totalTime;
 let isPaused = false;
+let currentCycle = 1;
+let totalCycles = 1;
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   console.log('Received message:', message);
   switch (message.type) {
     case 'START_TIMER':
       if (message.minutes !== undefined && message.seconds !== undefined) {
+        if (message.cycles !== undefined) {
+          currentCycle = 1;
+          totalCycles = message.cycles;
+        }
         startTimer(message.minutes, message.seconds, message.timerType);
       } else {
         resumeTimer(message.timerType);
@@ -23,7 +29,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       sendResponse({
         timeLeft,
         totalTime,
-        isPaused
+        isPaused,
+        currentCycle,
+        totalCycles
       });
       break;
     case 'TIMER_COMPLETE':
@@ -51,20 +59,19 @@ chrome.notifications.onClicked.addListener((notificationId) => {
 function sendMessageToPopup(message) {
   console.log("Attempting to send message to popup:", message);
   
-  chrome.runtime.sendMessage(message, (response) => {
-    if (chrome.runtime.lastError) {
-      console.error("Error in sendMessageToPopup:", chrome.runtime.lastError.message);
-    } else {
-      console.log("Received response from popup:", response);
-    }
-  });
-
-  // Also update storage so the popup can get the latest state when opened
+  // First, let's always store the message in storage so popup can get it when opened
   chrome.storage.local.set({
     lastTimerUpdate: {
       timestamp: Date.now(),
       ...message
     }
+  });
+  
+  // Then try to send message to popup if it's open
+  chrome.runtime.sendMessage(message).catch(error => {
+    // Silently catch 'receiving end does not exist' errors
+    // This is normal when popup is closed
+    console.log("Popup not available, message stored in local storage");
   });
 }
 
@@ -204,13 +211,60 @@ function handleTimerComplete(timerType) {
 
     case 'break':
       // Break ended
-      notificationOptions.title = 'Break Time Complete!';
-      notificationOptions.message = 'Ready to start another work session?';
-      notificationOptions.buttons = [
-        { title: 'Start Work' },
-        { title: 'Adjust Timer' }
-      ];
-      chrome.storage.local.set({ currentTimer: 'work' });
+      if (currentCycle < totalCycles) {
+        // Start next cycle
+        currentCycle++;
+        
+        notificationOptions.title = `Cycle ${currentCycle} of ${totalCycles} Starting!`;
+        notificationOptions.message = `Beginning work session for cycle ${currentCycle}.`;
+        notificationOptions.buttons = [
+          { title: 'Start Work' },
+          { title: 'Adjust Timer' }
+        ];
+        
+        // Send message about cycle progress
+        sendMessageToPopup({
+          type: 'CYCLE_UPDATE',
+          currentCycle,
+          totalCycles
+        });
+        
+        // Set currentTimer to work for the next cycle
+        chrome.storage.local.set({ currentTimer: 'work' }, () => {
+          // Start work timer for the next cycle
+          chrome.storage.local.get(['workTime'], (result) => {
+            if (result.workTime) {
+              const minutes = Math.floor(result.workTime / 60);
+              const seconds = result.workTime % 60;
+              
+              // Small delay to ensure notification is seen
+              setTimeout(() => {
+                console.log(`Starting next work cycle (${currentCycle} of ${totalCycles})`);
+                startTimer(minutes, seconds, 'work');
+                
+                // Also send an explicit message to update the UI
+                sendMessageToPopup({
+                  type: 'WORK_STARTED',
+                  message: 'Work time started for new cycle!',
+                  currentCycle,
+                  totalCycles
+                });
+              }, 1500);
+            }
+          });
+        });
+      } else {
+        // All cycles completed
+        notificationOptions.title = 'All Cycles Complete!';
+        notificationOptions.message = 'You have completed all your pomodoro cycles!';
+        notificationOptions.buttons = [
+          { title: 'Start Again' },
+          { title: 'Adjust Timer' }
+        ];
+        chrome.storage.local.set({ currentTimer: 'work' });
+        // Reset cycle counter
+        currentCycle = 1;
+      }
       break;
 
     default:
@@ -225,11 +279,13 @@ function handleTimerComplete(timerType) {
 }
 
 function updateState() {
-  console.log('Updating state:', { timeLeft, totalTime, isPaused });
+  console.log('Updating state:', { timeLeft, totalTime, isPaused, currentCycle, totalCycles });
   chrome.storage.local.set({
     timeLeft,
     totalTime,
-    isPaused
+    isPaused,
+    currentCycle,
+    totalCycles
   });
 }
 

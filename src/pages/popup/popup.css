@@ -498,3 +498,10 @@ body.minimized .container {
   font-weight: 600;
   color: #1f2937;
 }
+
+.cycle-counter {
+  font-size: 14px;
+  color: #6b7280;
+  margin-bottom: 8px;
+  font-weight: 500;
+}

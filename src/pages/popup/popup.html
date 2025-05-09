@@ -66,6 +66,13 @@
           </div>
         </div>
 
+        <div class="timer-label">Repeat Cycles</div>
+        <div class="input-container">
+          <div class="flex flex-col items-center">
+            <input type="number" id="repeatCycles" min="1" value="1" class="input">
+          </div>
+        </div>
+
         <div class="button-container">
           <button id="startTimer" class="btn btn-primary">Start</button>
         </div>
@@ -87,6 +94,7 @@
         <div class="flex flex-col items-center gap-4">
           <h1 class="text-2xl">Timer Running</h1>
           <div id="timerType" class="timer-type">Work Time</div>
+          <div id="cycleCounter" class="cycle-counter">Cycle 1 of 1</div>
           
           <div class="timer-display" id="display">00:00</div>
           

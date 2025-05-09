@@ -68,6 +68,12 @@ document.addEventListener('DOMContentLoaded', () => {
     } else if (message.type === 'TRANSITION_STARTED') {
       showTimerPage();
       updateTimerTypeText('transition');
+    } else if (message.type === 'CYCLE_UPDATE') {
+      updateCycleCounter(message.currentCycle, message.totalCycles);
+    } else if (message.type === 'WORK_STARTED') {
+      showTimerPage();
+      updateTimerTypeText('work');
+      updateCycleCounter(message.currentCycle, message.totalCycles);
     }
   });
 
@@ -119,20 +125,29 @@ document.addEventListener('DOMContentLoaded', () => {
     if (result.lastTimerUpdate) {
       const message = result.lastTimerUpdate;
       console.log("Popup loaded with a stored message:", message);
-      // Process the message here as needed. For example:
+      
+      // Process different message types
       if (message.type === 'TIMER_UPDATE') {
         updateDisplay(message.timeLeft);
         updateProgress(message.timeLeft, message.totalTime);
+      } else if (message.type === 'CYCLE_UPDATE' || message.type === 'WORK_STARTED') {
+        if (message.currentCycle && message.totalCycles) {
+          updateCycleCounter(message.currentCycle, message.totalCycles);
+        }
+      } else if (message.type === 'BREAK_STARTED') {
+        updateTimerTypeText('break');
+      } else if (message.type === 'TRANSITION_STARTED') {
+        updateTimerTypeText('transition');
       }
-      // Add additional cases if required
     }
   });
 
   // Listen for incoming messages
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     console.log("Popup received message:", message);
-    // Optionally send a response
+    // Send immediate response to close the message channel properly
     sendResponse({ received: true });
+    return false; // No async response expected
   });
 
   // Todo List Implementation
@@ -247,7 +262,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function initializeTimer() {
-    chrome.storage.local.get(['timeLeft', 'totalTime', 'isPaused', 'currentTimer'], (result) => {
+    chrome.storage.local.get(['timeLeft', 'totalTime', 'isPaused', 'currentTimer', 'currentCycle', 'totalCycles'], (result) => {
       console.log('Initializing timer with state:', result);
       if (result.timeLeft !== undefined && result.timeLeft > 0) {
         showTimerPage();
@@ -264,6 +279,11 @@ document.addEventListener('DOMContentLoaded', () => {
           updateTimerTypeText('work');
         }
         
+        // Update cycle counter if available
+        if (result.currentCycle !== undefined && result.totalCycles !== undefined) {
+          updateCycleCounter(result.currentCycle, result.totalCycles);
+        }
+        
         pauseButton.textContent = isPaused ? 'Resume' : 'Pause';
       } else {
         showInputPage();
@@ -277,6 +297,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const workSeconds = parseInt(workSecondsInput.value) || 0;
     const breakMinutes = parseInt(breakMinutesInput.value) || 0;
     const breakSeconds = parseInt(breakSecondsInput.value) || 0;
+    const cycles = parseInt(document.getElementById('repeatCycles').value) || 1;
     
     if ((workMinutes === 0 && workSeconds === 0) || (breakMinutes === 0 && breakSeconds === 0)) {
       alert('Please set both work and break timers.');
@@ -290,18 +311,22 @@ document.addEventListener('DOMContentLoaded', () => {
     chrome.storage.local.set({
       workTime,
       breakTime,
-      currentTimer: 'work'
+      currentTimer: 'work',
+      currentCycle: 1,
+      totalCycles: cycles
     });
 
     chrome.runtime.sendMessage({
       type: 'START_TIMER',
       minutes: workMinutes,
       seconds: workSeconds,
-      timerType: 'work'
+      timerType: 'work',
+      cycles: cycles
     });
     
     showTimerPage();
     updateTimerTypeText('work');
+    updateCycleCounter(1, cycles);
   }
 
   function handlePause() {
@@ -429,6 +454,14 @@ document.addEventListener('DOMContentLoaded', () => {
       
       miniTimerType.textContent = text;
       miniTimerType.dataset.type = timerType;
+    }
+  }
+
+  // Add a new function to update cycle counter
+  function updateCycleCounter(current, total) {
+    const cycleCounter = document.getElementById('cycleCounter');
+    if (cycleCounter) {
+      cycleCounter.textContent = `Cycle ${current} of ${total}`;
     }
   }
 
