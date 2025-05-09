@@ -12,6 +12,8 @@ body {
   align-items: center;
   box-sizing: border-box;
   overflow-y: auto;
+  position: relative;
+  overflow-x: hidden;
 }
 
 .container {
@@ -495,10 +497,20 @@ body.minimized .container {
 .header-controls {
   position: fixed;
   top: 10px;
-  left: 10px;
+  left: 0;
+  right: 0;
   display: flex;
-  gap: 8px;
+  justify-content: space-between;
+  padding: 0 10px;
   z-index: 1000;
+}
+
+#todo-toggle {
+  margin-left: 0;
+}
+
+#toggleView {
+  margin-right: 0;
 }
 
 .control-button {
@@ -528,4 +540,235 @@ body.minimized .container {
 /* Keep header controls visible in minimized view */
 body.minimized .header-controls {
   z-index: 1010;
+}
+
+.left-controls, .right-controls {
+  display: flex;
+}
+
+.left-controls {
+  margin-left: 2px;
+}
+
+.right-controls {
+  margin-right: 2px;
+}
+
+/* Layout for task panel and main content */
+.main-content {
+  position: relative;
+  width: 100%;
+}
+
+.todo-list-panel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 280px;
+  height: 100%;
+  background: linear-gradient(135deg, #e8eaf6 0%, #c5cae9 100%);
+  z-index: 2000;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid rgba(255, 255, 255, 0.2);
+  transform: translateX(-100%);
+  pointer-events: all;
+  overflow: hidden;
+}
+
+.todo-list-panel.visible {
+  transform: translateX(0);
+  animation: panelAppear 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes panelAppear {
+  0% {
+    opacity: 0.5;
+    transform: translateX(-20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+#todo-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.9);
+  margin: 8px;
+  border-radius: 16px;
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 8px 32px rgba(63, 81, 181, 0.15);
+}
+
+.todo-title {
+  font-size: 1.2rem;
+  color: #3f51b5;
+  font-weight: 600;
+  margin: 0 0 16px 0;
+  text-align: center;
+  text-shadow: 0 0 10px rgba(63, 81, 181, 0.1);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+#task-input-container {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 16px;
+}
+
+#task-input {
+  padding: 0.75rem 0.5rem;
+  border: 2px solid rgba(63, 81, 181, 0.3);
+  border-radius: 0.5rem;
+  outline: none;
+  transition: all 0.3s ease;
+  text-align: left;
+  font-size: 0.95rem;
+  background: rgba(255, 255, 255, 0.9);
+  color: #3f51b5;
+  margin-bottom: 8px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+#task-input:focus {
+  border-color: #3f51b5;
+  box-shadow: 0 0 15px rgba(63, 81, 181, 0.3);
+  transform: translateY(-2px);
+}
+
+#add-task {
+  padding: 0.5rem 0.5rem;
+  border: none;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: linear-gradient(90deg, #3f51b5 0%, #5c6bc0 100%);
+  color: white;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  transform-origin: center;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+#add-task:active {
+  transform: scale(0.95);
+}
+
+#add-task::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    45deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
+  transform: rotate(45deg);
+  transition: 0.5s;
+}
+
+#add-task:hover::after {
+  left: 100%;
+}
+
+.tasks-scroll-container {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 8px;
+  margin-right: -8px;
+}
+
+/* Task styling */
+.task-item {
+  background: rgba(255, 255, 255, 0.9);
+  padding: 12px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  border-left: 3px solid #3f51b5;
+  box-shadow: 0 2px 8px rgba(63, 81, 181, 0.1);
+  display: flex;
+  align-items: center;
+  transition: all 0.3s ease;
+  animation: taskAppear 0.3s ease-out forwards;
+  transform-origin: top;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+@keyframes taskAppear {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.task-item:hover {
+  transform: translateX(5px);
+  box-shadow: 0 4px 12px rgba(63, 81, 181, 0.2);
+  background: rgba(63, 81, 181, 0.15);
+}
+
+.task-item input[type="checkbox"] {
+  margin-right: 10px;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.task-item span {
+  flex: 1;
+  margin: 0 8px;
+  font-size: 0.9rem;
+  color: #1f2937;
+}
+
+.task-item.completed {
+  border-left-color: #059669;
+  opacity: 0.7;
+  background: rgba(5, 150, 105, 0.1);
+}
+
+.task-item.completed span {
+  text-decoration: line-through;
+  color: #6b7280;
+}
+
+.delete-task {
+  color: #ef4444;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  padding: 0 4px;
+  font-weight: bold;
+  opacity: 0.7;
+  transition: all 0.2s ease;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.delete-task:hover {
+  background: rgba(239, 68, 68, 0.2);
+  opacity: 1;
 }

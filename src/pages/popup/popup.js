@@ -160,6 +160,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Todo List Implementation
   const todoToggle = document.getElementById('todo-toggle');
   const todoList = document.getElementById('todo-list');
+  const mainContent = document.querySelector('.main-content');
   const taskInput = document.getElementById('task-input');
   const addTaskButton = document.getElementById('add-task');
   const tasksList = document.getElementById('tasks-list');
@@ -172,8 +173,25 @@ document.addEventListener('DOMContentLoaded', () => {
     todoToggle.style.opacity = '0.7';
   });
 
-  todoToggle.addEventListener('click', () => {
-    todoList.classList.toggle('hidden');
+  todoToggle.addEventListener('click', (e) => {
+    e.stopPropagation(); // Prevent document click from immediately closing the panel
+    todoList.classList.toggle('visible');
+    
+    // Focus on the input if the panel is visible
+    if (todoList.classList.contains('visible')) {
+      setTimeout(() => {
+        taskInput.focus();
+      }, 300); // Wait for animation to complete
+    }
+  });
+
+  // Close task panel when clicking outside
+  document.addEventListener('click', (e) => {
+    if (todoList.classList.contains('visible') && 
+        !todoList.contains(e.target) && 
+        e.target !== todoToggle) {
+      todoList.classList.remove('visible');
+    }
   });
 
   // Load existing tasks
@@ -232,10 +250,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const deleteButton = document.createElement('button');
     deleteButton.className = 'delete-task';
-    deleteButton.textContent = '\u2212';
+    deleteButton.textContent = '×';
     deleteButton.addEventListener('click', () => deleteTask(task.id));
-    deleteButton.addEventListener('mouseover', () => deleteButton.style.backgroundColor = '#ffcccc');
-    deleteButton.addEventListener('mouseout', () => deleteButton.style.backgroundColor = '');
 
     taskElement.appendChild(checkbox);
     taskElement.appendChild(taskText);

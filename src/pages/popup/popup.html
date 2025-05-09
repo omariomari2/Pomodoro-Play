@@ -5,121 +5,114 @@
   <link rel="stylesheet" href="../../pages/popup/popup.css">
 </head>
 <body>
-  <div id="todo-list" class="hidden" style="
-    position: fixed;
-    top: 10;
-    left: 10;
-    width: 80%;
-    height: 80%;
-    background: white;
-    z-index: 999;
-    padding: 10px;
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-  ">
-    <div id="todo-container" style="text-align: center;">
-      <h2 style="text-align: center; font-family: 'Poppins', sans-serif;font-size: 20px;
-       text-decoration: underline;">ADD A TASK</h2>
-      <div id="task-input-container">
-        <input type="text" id="task-input" placeholder="Enter a new task">
-        <button id="add-task" style="background-color: #077799; border-radius: 5px; margin-top: 10px; color: white;">
-          Add</button>
+  <div class="main-content">
+    <div class="header-controls">
+      <div class="left-controls">
+        <button id="todo-toggle" class="control-button">+</button>
       </div>
-      <div id="tasks-list">
+      <div class="right-controls">
+        <button id="toggleView" class="control-button" aria-label="Toggle view">
+          <svg class="chevron-down" width="8" height="8" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+          </svg>
+        </button>
       </div>
     </div>
-  </div>
 
-  <div class="header-controls">
-    <button id="todo-toggle" class="control-button">+</button>
-    <button id="toggleView" class="control-button" aria-label="Toggle view">
-      <svg class="chevron-down" width="8" height="8" viewBox="0 0 20 20" fill="currentColor">
-        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-      </svg>
-    </button>
-  </div>
-
-  <div id="inputPage" class="page">
-    <div class="container">
-      <div class="flex flex-col items-center gap-4">
-        <h1 class="text-2xl">PomoDoro Timer</h1>
-        
-        <div class="timer-label">Work Timer</div>
-        <div class="input-container">
-          <div class="flex flex-col items-center">
-            <input type="number" id="workMinutes" min="0" placeholder="Min" class="input">
-          </div>
-          <div class="flex flex-col items-center">
-            <input type="number" id="workSeconds" min="0" max="59" placeholder="Sec" class="input">
-          </div>
+    <div id="todo-list" class="todo-list-panel">
+      <div id="todo-container">
+        <h2 class="todo-title">TASKS</h2>
+        <div id="task-input-container">
+          <input type="text" id="task-input" placeholder="Enter a new task">
+          <button id="add-task">Add</button>
         </div>
-
-        <div class="timer-label">Break Timer</div>
-        <div class="input-container">
-          <div class="flex flex-col items-center">
-            <input type="number" id="breakMinutes" min="0" placeholder="Min" class="input">
-          </div>
-          <div class="flex flex-col items-center">
-            <input type="number" id="breakSeconds" min="0" max="59" placeholder="Sec" class="input">
-          </div>
-        </div>
-
-        <div class="timer-label">Repeat Cycles</div>
-        <div class="input-container">
-          <div class="flex flex-col items-center">
-            <input type="number" id="repeatCycles" min="1" value="1" class="input">
-          </div>
-        </div>
-
-        <div class="button-container">
-          <button id="startTimer" class="btn btn-primary">Start</button>
+        <div id="tasks-list" class="tasks-scroll-container">
         </div>
       </div>
     </div>
-  </div>
 
-  <div id="timerPage" class="page hidden">
-    <div id="timerContent" class="timer-content expanded">
+    <div id="inputPage" class="page">
       <div class="container">
         <div class="flex flex-col items-center gap-4">
-          <h1 class="text-2xl">Timer Running</h1>
-          <div id="timerType" class="timer-type">Work Time</div>
-          <div id="cycleCounter" class="cycle-counter">Cycle 1 of 1</div>
+          <h1 class="text-2xl">PomoDoro Timer</h1>
           
-          <div class="timer-display" id="display">00:00</div>
-          
-          <div class="progress-container">
-            <div class="progress-bar" id="progress"></div>
+          <div class="timer-label">Work Timer</div>
+          <div class="input-container">
+            <div class="flex flex-col items-center">
+              <input type="number" id="workMinutes" min="0" placeholder="Min" class="input">
+            </div>
+            <div class="flex flex-col items-center">
+              <input type="number" id="workSeconds" min="0" max="59" placeholder="Sec" class="input">
+            </div>
           </div>
 
-          <div class="button-container" style="margin-top: 6px;">
-            <button id="pauseTimer" class="btn btn-primary">Pause</button>
-            <button id="openGamesButton" class="btn btn-primary hidden">Play Games</button>
-            <button id="stopTimer" class="btn btn-secondary">Stop</button>
+          <div class="timer-label">Break Timer</div>
+          <div class="input-container">
+            <div class="flex flex-col items-center">
+              <input type="number" id="breakMinutes" min="0" placeholder="Min" class="input">
+            </div>
+            <div class="flex flex-col items-center">
+              <input type="number" id="breakSeconds" min="0" max="59" placeholder="Sec" class="input">
+            </div>
+          </div>
+
+          <div class="timer-label">Repeat Cycles</div>
+          <div class="input-container">
+            <div class="flex flex-col items-center">
+              <input type="number" id="repeatCycles" min="1" value="1" class="input">
+            </div>
+          </div>
+
+          <div class="button-container">
+            <button id="startTimer" class="btn btn-primary">Start</button>
           </div>
         </div>
       </div>
     </div>
-    
-    <div id="minimizedView" class="minimized-view">
-      <div id="miniTimerType" class="mini-timer-type" data-type="work">Work Time</div>
-      <div class="mini-timer-display" id="miniDisplay">00:00</div>
-      <div class="mini-progress-container">
-        <div id="miniProgress" class="progress-bar"></div>
+
+    <div id="timerPage" class="page hidden">
+      <div id="timerContent" class="timer-content expanded">
+        <div class="container">
+          <div class="flex flex-col items-center gap-4">
+            <h1 class="text-2xl">Timer Running</h1>
+            <div id="timerType" class="timer-type">Work Time</div>
+            <div id="cycleCounter" class="cycle-counter">Cycle 1 of 1</div>
+            
+            <div class="timer-display" id="display">00:00</div>
+            
+            <div class="progress-container">
+              <div class="progress-bar" id="progress"></div>
+            </div>
+
+            <div class="button-container" style="margin-top: 6px;">
+              <button id="pauseTimer" class="btn btn-primary">Pause</button>
+              <button id="openGamesButton" class="btn btn-primary hidden">Play Games</button>
+              <button id="stopTimer" class="btn btn-secondary">Stop</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div id="minimizedView" class="minimized-view">
+        <div id="miniTimerType" class="mini-timer-type" data-type="work">Work Time</div>
+        <div class="mini-timer-display" id="miniDisplay">00:00</div>
+        <div class="mini-progress-container">
+          <div id="miniProgress" class="progress-bar"></div>
+        </div>
       </div>
     </div>
-  </div>
 
-  <div id="breakChoicePage" class="page hidden">
-    <div class="container">
-      <div class="flex flex-col items-center gap-4">
-        <h1 class="text-2xl">Work Time Complete!</h1>
-        <div class="button-container">
-          <button id="startBreak" class="btn btn-primary">Start Break</button>
-          <button id="resetWork" class="btn btn-secondary">Reset Work Timer</button>
-        </div>
-        <div id="gamesButtonContainer" style="text-align: center; margin-top: 20px;">
-          <button id="openGamesButton" class="btn btn-primary">Play Games</button>
+    <div id="breakChoicePage" class="page hidden">
+      <div class="container">
+        <div class="flex flex-col items-center gap-4">
+          <h1 class="text-2xl">Work Time Complete!</h1>
+          <div class="button-container">
+            <button id="startBreak" class="btn btn-primary">Start Break</button>
+            <button id="resetWork" class="btn btn-secondary">Reset Work Timer</button>
+          </div>
+          <div id="gamesButtonContainer" style="text-align: center; margin-top: 20px;">
+            <button id="openGamesButton" class="btn btn-primary">Play Games</button>
+          </div>
         </div>
       </div>
     </div>
