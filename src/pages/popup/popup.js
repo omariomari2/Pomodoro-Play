@@ -166,9 +166,42 @@ document.addEventListener('DOMContentLoaded', () => {
   // Listen for incoming messages
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     console.log("Popup received message:", message);
-    // Send immediate response to close the message channel properly
+    
+    // Handle different message types
+    switch (message.type) {
+      case 'TIMER_UPDATE':
+        updateDisplay(message.timeLeft);
+        updateProgress(message.timeLeft, message.totalTime);
+        break;
+      case 'TIMER_PAUSED':
+        isPaused = true;
+        pauseButton.textContent = 'Resume';
+        break;
+      case 'TIMER_RESUMED':
+        isPaused = false;
+        pauseButton.textContent = 'Pause';
+        break;
+      case 'CYCLE_UPDATE':
+        updateCycleCounter(message.currentCycle, message.totalCycles);
+        break;
+      case 'WORK_STARTED':
+        showTimerPage();
+        updateTimerTypeText('work');
+        updateCycleCounter(message.currentCycle, message.totalCycles);
+        break;
+      case 'BREAK_STARTED':
+        showTimerPage();
+        updateTimerTypeText('break');
+        break;
+      case 'TRANSITION_STARTED':
+        showTimerPage();
+        updateTimerTypeText('transition');
+        break;
+    }
+    
+    // Send immediate response
     sendResponse({ received: true });
-    return false; // No async response expected
+    return false; // Don't keep the message channel open
   });
 
   // Todo List Implementation

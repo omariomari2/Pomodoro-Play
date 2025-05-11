@@ -5,6 +5,15 @@ let isPaused = false;
 let currentCycle = 1;
 let totalCycles = 1;
 
+// Initialize state object at the top of the file
+let state = {
+  timeLeft: 0,
+  totalTime: 0,
+  isPaused: false,
+  currentCycle: 1,
+  totalCycles: 1
+};
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   console.log('Received message:', message);
   switch (message.type) {
@@ -82,26 +91,68 @@ chrome.notifications.onClicked.addListener((notificationId) => {
   }
 });
 
-// Helper function to safely send messages with extra debugging
+// Function to send message to popup with better error handling
 function sendMessageToPopup(message) {
-  console.log("Attempting to send message to popup:", message);
+  console.log('Attempting to send message to popup:', message);
   
-  // First, let's always store the message in storage so popup can get it when opened
+  // Try to send message to popup
+  chrome.runtime.sendMessage(message)
+    .then(response => {
+      if (chrome.runtime.lastError) {
+        // Popup is not available, store message in local storage
+        console.log('Popup not available, message stored in local storage');
+        chrome.storage.local.set({ 
+          lastMessage: {
+            message: message,
+            timestamp: Date.now()
+          }
+        });
+      } else {
+        console.log('Message sent to popup successfully:', response);
+      }
+    })
+    .catch(error => {
+      console.log('Error sending message to popup:', error);
+      // Store message in local storage as fallback
+      chrome.storage.local.set({ 
+        lastMessage: {
+          message: message,
+          timestamp: Date.now()
+        }
+      });
+    });
+}
+
+// Update the updateState function to handle state properly
+function updateState(newState) {
+  console.log('Updating state:', newState);
+  
+  // Update state object with new values
+  if (newState) {
+    state = { ...state, ...newState };
+  }
+  
+  // Store state in local storage
   chrome.storage.local.set({
-    lastTimerUpdate: {
-      timestamp: Date.now(),
-      ...message
-    }
+    timeLeft: state.timeLeft,
+    totalTime: state.totalTime,
+    isPaused: state.isPaused,
+    currentCycle: state.currentCycle,
+    totalCycles: state.totalCycles
   });
   
-  // Then try to send message to popup if it's open
-  chrome.runtime.sendMessage(message).catch(error => {
-    // Silently catch 'receiving end does not exist' errors
-    // This is normal when popup is closed
-    console.log("Popup not available, message stored in local storage");
+  // Send state update to popup
+  sendMessageToPopup({
+    type: 'TIMER_UPDATE',
+    timeLeft: state.timeLeft,
+    totalTime: state.totalTime,
+    isPaused: state.isPaused,
+    currentCycle: state.currentCycle,
+    totalCycles: state.totalCycles
   });
 }
 
+// Update startTimer function to use state
 function startTimer(minutes, seconds, timerType) {
   console.log('Starting timer:', minutes, 'minutes', seconds, 'seconds');
   
@@ -110,17 +161,17 @@ function startTimer(minutes, seconds, timerType) {
   const secs = parseInt(seconds) || 0;
   
   if (mins !== undefined && secs !== undefined) {
-    timeLeft = (mins * 60) + secs;
-    totalTime = timeLeft;
+    state.timeLeft = (mins * 60) + secs;
+    state.totalTime = state.timeLeft;
   }
   
   // Ensure timeLeft is valid
-  if (!timeLeft || isNaN(timeLeft)) {
+  if (!state.timeLeft || isNaN(state.timeLeft)) {
     console.error('Invalid timer duration');
     return;
   }
   
-  isPaused = false;
+  state.isPaused = false;
   clearInterval(timer);
   
   // Track statistics
@@ -129,16 +180,16 @@ function startTimer(minutes, seconds, timerType) {
   }
   
   timer = setInterval(() => {
-    if (timeLeft <= 0) {
+    if (state.timeLeft <= 0) {
       if (timerType === 'transition') {
         // When transition ends, start break timer
         startBreakTimer();
       } else {
         // Track statistics for completed timer
         if (timerType === 'work') {
-          updatePomodoroStats('workTime', totalTime);
+          updatePomodoroStats('workTime', state.totalTime);
         } else if (timerType === 'break') {
-          updatePomodoroStats('breakTime', totalTime);
+          updatePomodoroStats('breakTime', state.totalTime);
         }
         
         handleTimerComplete(timerType);
@@ -146,24 +197,25 @@ function startTimer(minutes, seconds, timerType) {
       return;
     }
     
-    timeLeft--;
+    state.timeLeft--;
     updateState();
     
     // Use helper function instead of direct message
     sendMessageToPopup({
       type: 'TIMER_UPDATE',
-      timeLeft,
-      totalTime
+      timeLeft: state.timeLeft,
+      totalTime: state.totalTime
     });
   }, 1000);
   
   updateState();
 }
 
+// Update pauseTimer function to use state
 function pauseTimer() {
   console.log('Pausing timer');
   clearInterval(timer);
-  isPaused = true;
+  state.isPaused = true;
   updateState();
   
   sendMessageToPopup({
@@ -171,13 +223,14 @@ function pauseTimer() {
   });
 }
 
+// Update resumeTimer function to use state
 function resumeTimer(timerType) {
   console.log('Resuming timer');
-  isPaused = false;
+  state.isPaused = false;
   
   // Restart the interval with current timeLeft
   timer = setInterval(() => {
-    if (timeLeft <= 0) {
+    if (state.timeLeft <= 0) {
       if (timerType === 'transition') {
         startBreakTimer();
       } else {
@@ -186,13 +239,13 @@ function resumeTimer(timerType) {
       return;
     }
     
-    timeLeft--;
+    state.timeLeft--;
     updateState();
     
     sendMessageToPopup({
       type: 'TIMER_UPDATE',
-      timeLeft,
-      totalTime
+      timeLeft: state.timeLeft,
+      totalTime: state.totalTime
     });
   }, 1000);
   
@@ -203,13 +256,14 @@ function resumeTimer(timerType) {
   });
 }
 
+// Update stopTimer function to use state
 function stopTimer() {
   console.log('Stopping timer');
   clearInterval(timer);
   timer = null;
-  timeLeft = 0;
-  totalTime = 0;
-  isPaused = false;
+  state.timeLeft = 0;
+  state.totalTime = 0;
+  state.isPaused = false;
   updateState();
 }
 
@@ -343,17 +397,6 @@ function createCycleCompletionNotification(cycleNumber, isFinal = false) {
     setTimeout(() => {
       chrome.notifications.clear(notificationId);
     }, 5000);
-  });
-}
-
-function updateState() {
-  console.log('Updating state:', { timeLeft, totalTime, isPaused, currentCycle, totalCycles });
-  chrome.storage.local.set({
-    timeLeft,
-    totalTime,
-    isPaused,
-    currentCycle,
-    totalCycles
   });
 }
 

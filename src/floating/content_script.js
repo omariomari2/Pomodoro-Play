@@ -1,3 +1,14 @@
+// Use window to store state to prevent redeclaration
+if (!window.pomodoroState) {
+  window.pomodoroState = {
+    isExtensionConnected: true,
+    reconnectAttempts: 0,
+    MAX_RECONNECT_ATTEMPTS: 3,
+    lastUpdateTime: Date.now(),
+    updateInterval: null
+  };
+}
+
 // Content script for floating icon
 console.log('%c POMODORO CONTENT SCRIPT LOADED!', 'background: #3f51b5; color: white; padding: 5px; border-radius: 3px; font-weight: bold;');
 console.log('Loaded on page:', window.location.href);
@@ -23,6 +34,46 @@ if (window.pomodoroPlayContentLoaded) {
   setupMessageListeners();
 }
 
+// Function to check extension connection
+function checkExtensionConnection() {
+  try {
+    chrome.runtime.getURL('');
+    window.pomodoroState.isExtensionConnected = true;
+    window.pomodoroState.reconnectAttempts = 0;
+    return true;
+  } catch (error) {
+    window.pomodoroState.isExtensionConnected = false;
+    return false;
+  }
+}
+
+// Function to handle extension disconnection
+function handleExtensionDisconnection() {
+  if (!window.pomodoroState.isExtensionConnected || window.pomodoroState.reconnectAttempts >= window.pomodoroState.MAX_RECONNECT_ATTEMPTS) {
+    console.log('Extension disconnected, removing floating icon');
+    if (window.pomodoroState.updateInterval) {
+      clearInterval(window.pomodoroState.updateInterval);
+    }
+    const icon = document.getElementById('pomodoro-floating-icon');
+    if (icon) {
+      icon.remove();
+    }
+    return;
+  }
+
+  console.log(`Attempting to reconnect (attempt ${window.pomodoroState.reconnectAttempts + 1}/${window.pomodoroState.MAX_RECONNECT_ATTEMPTS})...`);
+  window.pomodoroState.reconnectAttempts++;
+
+  // Try to reload the content script
+  const script = document.createElement('script');
+  script.src = chrome.runtime.getURL('src/floating/content_script.js');
+  script.onload = () => {
+    console.log('Content script reloaded');
+    script.remove();
+  };
+  (document.head || document.documentElement).appendChild(script);
+}
+
 // Function to create floating elements
 function createFloatingElements() {
   console.log('Creating floating elements...');
@@ -33,69 +84,95 @@ function createFloatingElements() {
     return;
   }
 
-  // Create icon element
+  // Create icon container
   const icon = document.createElement('div');
   icon.id = 'pomodoro-floating-icon';
   
   // Set initial display to none (hidden until toggled on)
   icon.style.display = 'none';
   
-  // Add clock icon
-  const iconImg = document.createElement('img');
-  iconImg.src = chrome.runtime.getURL('src/assets/icons/clock1.png');
-  iconImg.alt = 'Pomodoro Timer';
-  icon.appendChild(iconImg);
+  // Add timer display elements
+  const timerDisplay = document.createElement('div');
+  timerDisplay.className = 'timer-display';
+  timerDisplay.textContent = '00:00';
   
-  // Create timer panel
-  const timerPanel = document.createElement('div');
-  timerPanel.id = 'pomodoro-floating-timer';
+  const timerType = document.createElement('div');
+  timerType.className = 'timer-type';
+  timerType.textContent = 'Work Time';
   
-  // Create timer content
-  timerPanel.innerHTML = `
-    <button class="close-btn">&times;</button>
-    <div class="timer-type">Work Time</div>
-    <div class="timer-display">25:00</div>
-    <div class="cycle-display">Cycle 1 of 1</div>
-    <div class="progress-container">
-      <div class="progress-bar" style="width: 100%;"></div>
-    </div>
-    <div class="timer-actions">
-      <button class="timer-btn pause-btn">Pause</button>
-      <button class="timer-btn stop-btn">Stop</button>
-    </div>
-  `;
+  // Add elements to icon
+  icon.appendChild(timerDisplay);
+  icon.appendChild(timerType);
   
-  // Add elements to body
+  // Add to body
   document.body.appendChild(icon);
-  document.body.appendChild(timerPanel);
-  console.log('Added floating elements to body');
+  console.log('Added floating icon to body');
   
   // Add CSS
-  const linkElement = document.createElement('link');
-  linkElement.rel = 'stylesheet';
-  linkElement.href = chrome.runtime.getURL('src/floating/floating.css');
-  document.head.appendChild(linkElement);
+  const style = document.createElement('style');
+  style.textContent = `
+    #pomodoro-floating-icon {
+      position: fixed;
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(135deg, #3f51b5 0%, #5c6bc0 100%);
+      border-radius: 50%;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: move;
+      user-select: none;
+      z-index: 2147483647;
+      border: 2px solid rgba(255, 255, 255, 0.6);
+      color: white;
+      font-family: Arial, sans-serif;
+      transition: transform 0.2s, opacity 0.3s;
+      opacity: 0.9;
+    }
+    
+    #pomodoro-floating-icon:hover {
+      opacity: 1;
+      transform: scale(1.05);
+    }
+    
+    #pomodoro-floating-icon .timer-display {
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+    
+    #pomodoro-floating-icon .timer-type {
+      font-size: 12px;
+      opacity: 0.9;
+    }
+  `;
+  document.head.appendChild(style);
   
   // Initialize dragging capability
   makeDraggable(icon);
-  
-  // Initialize event listeners
-  initializeEventListeners(icon, timerPanel);
   
   // Load saved position
   loadPosition(icon);
   
   // Check if icon should be visible immediately based on saved preferences
-  chrome.storage.local.get(['floatingIconEnabled'], (result) => {
-    console.log('Checked stored floating icon state:', result.floatingIconEnabled);
-    if (result.floatingIconEnabled) {
-      icon.style.display = 'flex';
-      console.log('Set icon display to flex based on stored preference');
-    }
-  });
+  if (checkExtensionConnection()) {
+    chrome.storage.local.get(['floatingIconEnabled'], (result) => {
+      console.log('Checked stored floating icon state:', result.floatingIconEnabled);
+      if (result.floatingIconEnabled) {
+        icon.style.display = 'flex';
+        requestTimerState(); // Request state when creating icon
+        startPeriodicChecks(); // Start periodic checks
+      }
+    });
+  }
+  
+  // Start listening for timer updates
+  setupMessageListeners();
 }
 
-// Make an element draggable
+// Update makeDraggable function with better error handling
 function makeDraggable(element) {
   let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
   
@@ -103,198 +180,233 @@ function makeDraggable(element) {
   
   function dragMouseDown(e) {
     e.preventDefault();
-    // Get the mouse cursor position at startup
-    pos3 = e.clientX;
-    pos4 = e.clientY;
-    document.onmouseup = closeDragElement;
-    // Call a function whenever the cursor moves
-    document.onmousemove = elementDrag;
+    if (!checkExtensionConnection()) {
+      handleExtensionDisconnection();
+      return;
+    }
+    
+    try {
+      pos3 = e.clientX;
+      pos4 = e.clientY;
+      document.onmouseup = closeDragElement;
+      document.onmousemove = elementDrag;
+    } catch (error) {
+      console.error('Error in dragMouseDown:', error);
+      handleExtensionDisconnection();
+    }
   }
   
   function elementDrag(e) {
     e.preventDefault();
-    // Calculate the new cursor position
-    pos1 = pos3 - e.clientX;
-    pos2 = pos4 - e.clientY;
-    pos3 = e.clientX;
-    pos4 = e.clientY;
-    // Set the element's new position
-    element.style.top = (element.offsetTop - pos2) + "px";
-    element.style.left = (element.offsetLeft - pos1) + "px";
-    // Clear right/bottom if set
-    element.style.right = '';
-    element.style.bottom = '';
+    if (!checkExtensionConnection()) {
+      handleExtensionDisconnection();
+      return;
+    }
+    
+    try {
+      pos1 = pos3 - e.clientX;
+      pos2 = pos4 - e.clientY;
+      pos3 = e.clientX;
+      pos4 = e.clientY;
+      element.style.top = (element.offsetTop - pos2) + "px";
+      element.style.left = (element.offsetLeft - pos1) + "px";
+      element.style.right = '';
+      element.style.bottom = '';
+    } catch (error) {
+      console.error('Error in elementDrag:', error);
+      closeDragElement();
+    }
   }
   
   function closeDragElement() {
-    // Stop moving when mouse button is released
-    document.onmouseup = null;
-    document.onmousemove = null;
-    
-    // Save position
-    savePosition(element);
+    try {
+      document.onmouseup = null;
+      document.onmousemove = null;
+      if (checkExtensionConnection()) {
+        savePosition(element);
+      }
+    } catch (error) {
+      console.error('Error in closeDragElement:', error);
+      handleExtensionDisconnection();
+    }
   }
 }
 
-// Save element position
-function savePosition(element) {
-  const position = {
-    top: element.style.top,
-    left: element.style.left
-  };
-  
-  chrome.storage.local.set({ 'floatingIconPosition': position });
-}
-
-// Load saved position
+// Update loadPosition function with better error handling
 function loadPosition(element) {
-  chrome.storage.local.get(['floatingIconPosition'], (result) => {
-    if (result.floatingIconPosition) {
-      element.style.top = result.floatingIconPosition.top;
-      element.style.left = result.floatingIconPosition.left;
-      // Clear default right/bottom if custom position loaded
-      if (result.floatingIconPosition.top && result.floatingIconPosition.left) {
-        element.style.right = '';
-        element.style.bottom = '';
+  if (!checkExtensionConnection()) {
+    handleExtensionDisconnection();
+    return;
+  }
+
+  try {
+    chrome.storage.local.get(['floatingIconPosition'], (result) => {
+      if (result.floatingIconPosition) {
+        element.style.top = result.floatingIconPosition.top;
+        element.style.left = result.floatingIconPosition.left;
+        if (result.floatingIconPosition.top && result.floatingIconPosition.left) {
+          element.style.right = '';
+          element.style.bottom = '';
+        }
       }
-    }
-  });
-}
-
-// Initialize event listeners
-function initializeEventListeners(icon, timerPanel) {
-  // Toggle timer panel when icon is clicked
-  icon.addEventListener('click', (e) => {
-    // Prevent this from triggering drag
-    if (!e.isTrusted) return;
-    
-    timerPanel.classList.toggle('visible');
-    updateTimerState();
-  });
-  
-  // Close timer panel
-  const closeBtn = timerPanel.querySelector('.close-btn');
-  closeBtn.addEventListener('click', () => {
-    timerPanel.classList.remove('visible');
-  });
-  
-  // Pause/resume button
-  const pauseBtn = timerPanel.querySelector('.pause-btn');
-  pauseBtn.addEventListener('click', () => {
-    chrome.runtime.sendMessage({ 
-      type: pauseBtn.textContent === 'Pause' ? 'PAUSE_TIMER' : 'START_TIMER',
-      timerType: getCurrentTimerType() 
-    }, () => {
-      updateTimerState();
     });
-  });
-  
-  // Stop button
-  const stopBtn = timerPanel.querySelector('.stop-btn');
-  stopBtn.addEventListener('click', () => {
-    chrome.runtime.sendMessage({ type: 'STOP_TIMER' }, () => {
-      timerPanel.classList.remove('visible');
-    });
-  });
+  } catch (error) {
+    console.error('Error loading position:', error);
+    handleExtensionDisconnection();
+  }
 }
 
-// Get current timer type
-function getCurrentTimerType() {
-  return document.querySelector('.timer-type').textContent.toLowerCase().includes('work') ? 'work' : 
-         document.querySelector('.timer-type').textContent.toLowerCase().includes('break') ? 'break' : 'transition';
+// Update savePosition function with better error handling
+function savePosition(element) {
+  if (!checkExtensionConnection()) {
+    handleExtensionDisconnection();
+    return;
+  }
+
+  try {
+    const position = {
+      top: element.style.top,
+      left: element.style.left
+    };
+    chrome.storage.local.set({ 'floatingIconPosition': position });
+  } catch (error) {
+    console.error('Error saving position:', error);
+    handleExtensionDisconnection();
+  }
 }
 
-// Update timer state from background
-function updateTimerState() {
-  chrome.runtime.sendMessage({ type: 'GET_STATE' }, (response) => {
-    if (!response) return;
-    
-    const timerPanel = document.getElementById('pomodoro-floating-timer');
-    if (!timerPanel) return;
-    
-    const timeLeft = response.timeLeft;
-    const totalTime = response.totalTime;
-    const isPaused = response.isPaused;
-    const currentCycle = response.currentCycle || 1;
-    const totalCycles = response.totalCycles || 1;
-    
-    // Get elements
-    const timerType = timerPanel.querySelector('.timer-type');
-    const timerDisplay = timerPanel.querySelector('.timer-display');
-    const cycleDisplay = timerPanel.querySelector('.cycle-display');
-    const progressBar = timerPanel.querySelector('.progress-bar');
-    const pauseBtn = timerPanel.querySelector('.pause-btn');
-    
-    // Format time
-    if (timeLeft !== undefined) {
-      const minutes = Math.floor(timeLeft / 60);
-      const seconds = timeLeft % 60;
+// Function to handle timer updates
+function handleTimerUpdate(message) {
+  try {
+    const icon = document.getElementById('pomodoro-floating-icon');
+    if (!icon) return;
+
+    const timerDisplay = icon.querySelector('.timer-display');
+    const timerType = icon.querySelector('.timer-type');
+
+    if (timerDisplay && message.timeLeft !== undefined) {
+      const minutes = Math.floor(message.timeLeft / 60);
+      const seconds = message.timeLeft % 60;
       timerDisplay.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
     }
-    
-    // Update cycle display
-    cycleDisplay.textContent = `Cycle ${currentCycle} of ${totalCycles}`;
-    
-    // Update pause button
-    pauseBtn.textContent = isPaused ? 'Resume' : 'Pause';
-    
-    // Update progress
-    if (timeLeft !== undefined && totalTime !== undefined) {
-      const percentage = (timeLeft / totalTime) * 100;
-      progressBar.style.width = `${percentage}%`;
-    }
-    
-    // Get timer type from background
-    chrome.storage.local.get(['currentTimer'], (result) => {
-      if (result.currentTimer) {
-        switch(result.currentTimer) {
-          case 'work':
-            timerType.textContent = 'Work Time';
-            timerType.style.color = '#4f46e5';
-            break;
-          case 'break':
-            timerType.textContent = 'Break Time';
-            timerType.style.color = '#059669';
-            break;
-          case 'transition':
-            timerType.textContent = 'Get Ready for Break!';
-            timerType.style.color = '#eab308';
-            break;
-        }
+
+    if (message.timerType && timerType) {
+      switch(message.timerType) {
+        case 'work':
+          timerType.textContent = 'Work Time';
+          icon.style.background = 'linear-gradient(135deg, #3f51b5 0%, #5c6bc0 100%)';
+          break;
+        case 'break':
+          timerType.textContent = 'Break Time';
+          icon.style.background = 'linear-gradient(135deg, #059669 0%, #10b981 100%)';
+          break;
+        case 'transition':
+          timerType.textContent = 'Break Soon!';
+          icon.style.background = 'linear-gradient(135deg, #eab308 0%, #f59e0b 100%)';
+          break;
       }
-    });
-  });
+    }
+
+    window.pomodoroState.lastUpdateTime = Date.now();
+  } catch (error) {
+    console.error('Error updating timer:', error);
+  }
 }
 
-// Setup message listeners
-function setupMessageListeners() {
-  // Listen for messages from the extension
-  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    console.log('Content script received message:', message);
-    
-    if (message.type === 'TOGGLE_FLOATING_ICON') {
-      console.log('Toggling floating icon visibility:', message.visible);
-      
-      const icon = document.getElementById('pomodoro-floating-icon');
-      if (icon) {
-        icon.style.display = message.visible ? 'flex' : 'none';
-        console.log('Set icon display to:', icon.style.display);
-        sendResponse({ success: true, display: icon.style.display });
-      } else if (message.visible) {
-        console.log('Icon not found, creating elements');
-        createFloatingElements();
-        const newIcon = document.getElementById('pomodoro-floating-icon');
-        if (newIcon) {
-          newIcon.style.display = 'flex';
-          sendResponse({ success: true, created: true });
-        } else {
-          sendResponse({ success: false, error: 'Failed to create icon' });
-        }
-      } else {
-        sendResponse({ success: true, message: 'No action needed' });
+// Function to request timer state
+function requestTimerState() {
+  if (!checkExtensionConnection()) {
+    handleExtensionDisconnection();
+    return;
+  }
+
+  try {
+    chrome.runtime.sendMessage({ type: 'GET_STATE' }, (response) => {
+      if (response) {
+        handleTimerUpdate({
+          timeLeft: response.timeLeft,
+          timerType: response.currentTimer
+        });
       }
+    });
+  } catch (error) {
+    console.error('Error requesting timer state:', error);
+    handleExtensionDisconnection();
+  }
+}
+
+// Function to start periodic state checks
+function startPeriodicChecks() {
+  if (window.pomodoroState.updateInterval) {
+    clearInterval(window.pomodoroState.updateInterval);
+  }
+
+  window.pomodoroState.updateInterval = setInterval(() => {
+    if (Date.now() - window.pomodoroState.lastUpdateTime > 2000) { // If no updates for 2 seconds
+      requestTimerState();
     }
-    
-    return true; // Keep the message channel open for async responses
-  });
+  }, 1000); // Check every second
+}
+
+// Update setupMessageListeners with periodic checks
+function setupMessageListeners() {
+  if (!checkExtensionConnection()) {
+    handleExtensionDisconnection();
+    return;
+  }
+
+  try {
+    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+      if (!checkExtensionConnection()) {
+        handleExtensionDisconnection();
+        return;
+      }
+
+      try {
+        if (message.type === 'TOGGLE_FLOATING_ICON') {
+          const icon = document.getElementById('pomodoro-floating-icon');
+          if (icon) {
+            icon.style.display = message.visible ? 'flex' : 'none';
+            if (message.visible) {
+              requestTimerState(); // Request state when showing icon
+              startPeriodicChecks(); // Start periodic checks
+            } else {
+              if (window.pomodoroState.updateInterval) {
+                clearInterval(window.pomodoroState.updateInterval);
+              }
+            }
+            sendResponse({ success: true, display: icon.style.display });
+          } else if (message.visible) {
+            createFloatingElements();
+            const newIcon = document.getElementById('pomodoro-floating-icon');
+            if (newIcon) {
+              newIcon.style.display = 'flex';
+              requestTimerState(); // Request state when creating icon
+              startPeriodicChecks(); // Start periodic checks
+              sendResponse({ success: true, created: true });
+            } else {
+              sendResponse({ success: false, error: 'Failed to create icon' });
+            }
+          } else {
+            sendResponse({ success: true, message: 'No action needed' });
+          }
+        } else if (message.type === 'TIMER_UPDATE') {
+          handleTimerUpdate(message);
+          sendResponse({ success: true });
+        }
+      } catch (error) {
+        console.error('Error handling message:', error);
+        handleExtensionDisconnection();
+        sendResponse({ success: false, error: error.message });
+      }
+      return true;
+    });
+
+    // Request initial state
+    requestTimerState();
+    startPeriodicChecks();
+  } catch (error) {
+    console.error('Error setting up message listeners:', error);
+    handleExtensionDisconnection();
+  }
 } 
