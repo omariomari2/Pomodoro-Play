@@ -22,8 +22,8 @@
     <div id="todo-list" class="todo-list-panel">
       <div id="todo-container">
         <h2 class="todo-title">TASKS</h2>
-        <div id="task-input-container">
-          <input type="text" id="task-input" placeholder="Enter a new task">
+      <div id="task-input-container">
+        <input type="text" id="task-input" placeholder="Enter a new task">
           <button id="add-task">Add</button>
         </div>
         <div id="tasks-list" class="tasks-scroll-container">
@@ -74,34 +74,34 @@
         </div>
         <div class="stats-footer">
           <div id="stat-last-active" class="last-active">Last active: Today</div>
-        </div>
       </div>
     </div>
+  </div>
 
-    <div id="inputPage" class="page">
-      <div class="container">
-        <div class="flex flex-col items-center gap-4">
-          <h1 class="text-2xl">PomoDoro Timer</h1>
-          
-          <div class="timer-label">Work Timer</div>
-          <div class="input-container">
-            <div class="flex flex-col items-center">
-              <input type="number" id="workMinutes" min="0" placeholder="Min" class="input">
-            </div>
-            <div class="flex flex-col items-center">
-              <input type="number" id="workSeconds" min="0" max="59" placeholder="Sec" class="input">
-            </div>
+  <div id="inputPage" class="page">
+    <div class="container">
+      <div class="flex flex-col items-center gap-4">
+        <h1 class="text-2xl">PomoDoro Timer</h1>
+        
+        <div class="timer-label">Work Timer</div>
+        <div class="input-container">
+          <div class="flex flex-col items-center">
+            <input type="number" id="workMinutes" min="0" placeholder="Min" class="input">
           </div>
+          <div class="flex flex-col items-center">
+            <input type="number" id="workSeconds" min="0" max="59" placeholder="Sec" class="input">
+          </div>
+        </div>
 
-          <div class="timer-label">Break Timer</div>
-          <div class="input-container">
-            <div class="flex flex-col items-center">
-              <input type="number" id="breakMinutes" min="0" placeholder="Min" class="input">
-            </div>
-            <div class="flex flex-col items-center">
-              <input type="number" id="breakSeconds" min="0" max="59" placeholder="Sec" class="input">
-            </div>
+        <div class="timer-label">Break Timer</div>
+        <div class="input-container">
+          <div class="flex flex-col items-center">
+            <input type="number" id="breakMinutes" min="0" placeholder="Min" class="input">
           </div>
+          <div class="flex flex-col items-center">
+            <input type="number" id="breakSeconds" min="0" max="59" placeholder="Sec" class="input">
+          </div>
+        </div>
 
           <div class="timer-label">Repeat Cycles</div>
           <div class="input-container">
@@ -117,55 +117,55 @@
             </label>
           </div>
 
-          <div class="button-container">
-            <button id="startTimer" class="btn btn-primary">Start</button>
-          </div>
+        <div class="button-container">
+          <button id="startTimer" class="btn btn-primary">Start</button>
         </div>
       </div>
     </div>
+  </div>
 
-    <div id="timerPage" class="page hidden">
-      <div id="timerContent" class="timer-content expanded">
-        <div class="container">
-          <div class="flex flex-col items-center gap-4">
-            <h1 class="text-2xl">Timer Running</h1>
-            <div id="timerType" class="timer-type">Work Time</div>
-            <div id="cycleCounter" class="cycle-counter">Cycle 1 of 1</div>
-            
-            <div class="timer-display" id="display">00:00</div>
-            
-            <div class="progress-container">
-              <div class="progress-bar" id="progress"></div>
-            </div>
-
-            <div class="button-container" style="margin-top: 6px;">
-              <button id="pauseTimer" class="btn btn-primary">Pause</button>
-              <button id="openGamesButton" class="btn btn-primary hidden">Play Games</button>
-              <button id="stopTimer" class="btn btn-secondary">Stop</button>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div id="minimizedView" class="minimized-view">
-        <div id="miniTimerType" class="mini-timer-type" data-type="work">Work Time</div>
-        <div class="mini-timer-display" id="miniDisplay">00:00</div>
-        <div class="mini-progress-container">
-          <div id="miniProgress" class="progress-bar"></div>
-        </div>
-      </div>
-    </div>
-
-    <div id="breakChoicePage" class="page hidden">
+  <div id="timerPage" class="page hidden">
+    <div id="timerContent" class="timer-content expanded">
       <div class="container">
         <div class="flex flex-col items-center gap-4">
-          <h1 class="text-2xl">Work Time Complete!</h1>
-          <div class="button-container">
-            <button id="startBreak" class="btn btn-primary">Start Break</button>
-            <button id="resetWork" class="btn btn-secondary">Reset Work Timer</button>
+          <h1 class="text-2xl">Timer Running</h1>
+          <div id="timerType" class="timer-type">Work Time</div>
+            <div id="cycleCounter" class="cycle-counter">Cycle 1 of 1</div>
+          
+          <div class="timer-display" id="display">00:00</div>
+          
+          <div class="progress-container">
+            <div class="progress-bar" id="progress"></div>
           </div>
-          <div id="gamesButtonContainer" style="text-align: center; margin-top: 20px;">
-            <button id="openGamesButton" class="btn btn-primary">Play Games</button>
+
+            <div class="button-container" style="margin-top: 6px;">
+            <button id="pauseTimer" class="btn btn-primary">Pause</button>
+            <button id="openGamesButton" class="btn btn-primary hidden">Play Games</button>
+            <button id="stopTimer" class="btn btn-secondary">Stop</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div id="minimizedView" class="minimized-view">
+      <div id="miniTimerType" class="mini-timer-type" data-type="work">Work Time</div>
+      <div class="mini-timer-display" id="miniDisplay">00:00</div>
+      <div class="mini-progress-container">
+        <div id="miniProgress" class="progress-bar"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="breakChoicePage" class="page hidden">
+    <div class="container">
+      <div class="flex flex-col items-center gap-4">
+        <h1 class="text-2xl">Work Time Complete!</h1>
+        <div class="button-container">
+          <button id="startBreak" class="btn btn-primary">Start Break</button>
+          <button id="resetWork" class="btn btn-secondary">Reset Work Timer</button>
+        </div>
+        <div id="gamesButtonContainer" style="text-align: center; margin-top: 20px;">
+          <button id="openGamesButton" class="btn btn-primary">Play Games</button>
           </div>
         </div>
       </div>
