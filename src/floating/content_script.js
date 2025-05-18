@@ -30,9 +30,6 @@ if (window.pomodoroPlayContentLoaded) {
   
   // Create the floating icon elements directly
   createFloatingElements();
-  
-  // Add state change listeners
-  setupMessageListeners();
 }
 
 // Utility to safely call chrome APIs and handle extension context invalidation
@@ -41,11 +38,12 @@ function safeChromeCall(callback) {
     callback();
   } catch (e) {
     if (e.message && e.message.includes('Extension context invalidated')) {
-      // Remove icon and panel if context is invalid
       const icon = document.getElementById('pomodoro-floating-icon');
       const panel = document.getElementById('pomodoro-floating-panel');
       if (icon) icon.remove();
       if (panel) panel.remove();
+    } else {
+      console.error('Chrome API call failed:', e);
     }
   }
 }
@@ -141,9 +139,8 @@ function createFloatingElements() {
 
   // Panel content
   panel.innerHTML = `
-    <div style="display:flex;align-items:center;justify-content:space-between;width:100%;font-size:13px;font-weight:500;color:#4f46e5;">
-      <span class="panel-timer-type">Work Time</span>
-      <span class="panel-timer-display" style="color:#222;font-size:15px;font-weight:600;">00:00</span>
+    <div style="display:flex;align-items:center;justify-content:center;width:100%;font-size:15px;font-weight:600;color:#222;">
+      <span class="panel-timer-display">00:00</span>
     </div>
     <div class="panel-progress-container" style="width:100%;height:8px;background:#e0e7ff;border-radius:4px;margin-top:6px;overflow:hidden;">
       <div class="panel-progress-bar" style="height:100%;width:100%;background:linear-gradient(90deg,#6366f1 0%,#a5b4fc 100%);"></div>
@@ -247,30 +244,29 @@ function makeDraggable(element, panel) {
   }
 }
 
-// Only update panel and icon visibility when timer is running
+// Only update panel when timer is running
 function handlePanelTimerUpdate(panel, message) {
-  // Only hide the panel if timer is not running
-  const timerActive = message.timeLeft > 0;
-  if (panel && !timerActive) panel.style.display = 'none';
-  window.pomodoroState.panelOpen = panel && panel.style.display === 'flex' && timerActive;
-  if (!timerActive) return;
-  const icon = document.getElementById('pomodoro-floating-icon');
-  // Only show icon if timer is running and not paused
-  const timerRunning = message.timeLeft > 0 && !message.isPaused;
-  if (icon) icon.style.display = timerRunning ? 'flex' : 'none';
-  const timerType = panel.querySelector('.panel-timer-type');
-  const timerDisplay = panel.querySelector('.panel-timer-display');
-  const progressBar = panel.querySelector('.panel-progress-bar');
-  if (timerType && message.timerType) timerType.textContent = message.timerType === 'work' ? 'Work Time' : message.timerType === 'break' ? 'Break Time' : 'Break Soon!';
-  if (timerDisplay && message.timeLeft !== undefined) {
-    const minutes = Math.floor(message.timeLeft / 60);
-    const seconds = message.timeLeft % 60;
-    timerDisplay.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-  }
-  if (progressBar && message.timeLeft !== undefined && message.totalTime) {
-    const percent = Math.max(0, Math.min(100, (message.timeLeft / message.totalTime) * 100));
-    progressBar.style.width = percent + '%';
-  }
+  safeChromeCall(() => {
+    // Only hide the panel if timer is not running
+    const timerActive = message.timeLeft > 0;
+    if (panel && !timerActive) panel.style.display = 'none';
+    window.pomodoroState.panelOpen = panel && panel.style.display === 'flex' && timerActive;
+    if (!timerActive) return;
+
+    const timerDisplay = panel.querySelector('.panel-timer-display');
+    const progressBar = panel.querySelector('.panel-progress-bar');
+    // Update timer
+    if (timerDisplay && message.timeLeft !== undefined) {
+      const minutes = Math.floor(message.timeLeft / 60);
+      const seconds = message.timeLeft % 60;
+      timerDisplay.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    }
+    // Update progress bar
+    if (progressBar && message.timeLeft !== undefined && message.totalTime) {
+      const percent = Math.max(0, Math.min(100, (message.timeLeft / message.totalTime) * 100));
+      progressBar.style.width = percent + '%';
+    }
+  });
 }
 
 function requestTimerState() {
@@ -297,8 +293,8 @@ function startPanelPeriodicChecks(panel) {
 }
 
 // Listen for messages
-safeChromeCall(() => {
-  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  try {
     if (message.type === 'TOGGLE_FLOATING_ICON') {
       const icon = document.getElementById('pomodoro-floating-icon');
       if (icon) icon.style.display = message.visible ? 'flex' : 'none';
@@ -306,8 +302,17 @@ safeChromeCall(() => {
       const panel = document.getElementById('pomodoro-floating-panel');
       handlePanelTimerUpdate(panel, message);
     }
-    return true;
-  });
+  } catch (e) {
+    if (e.message && e.message.includes('Extension context invalidated')) {
+      const icon = document.getElementById('pomodoro-floating-icon');
+      const panel = document.getElementById('pomodoro-floating-panel');
+      if (icon) icon.remove();
+      if (panel) panel.remove();
+    } else {
+      console.error('Error in message listener:', e);
+    }
+  }
+  return true;
 });
 
 // Initialize
