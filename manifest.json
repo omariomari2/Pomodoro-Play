@@ -1,16 +1,14 @@
 {
   "manifest_version": 3,
-  "name": "Pomodoro Play",
-  "version": "1.8.0",
-  "description": "A simple timer extension with notifications and sound",
+  "name": "PomoDoro Timer",
+  "version": "1.0",
+  "description": "A customizable Pomodoro timer with task management",
 
   "permissions": [
     "storage",
-    "notifications",
     "alarms",
-    "tabs",
-    "scripting",
-    "activeTab"
+    "notifications",
+    "tabs"
   ],
   "host_permissions": [
     "<all_urls>"
@@ -29,19 +27,10 @@
     "48": "src/assets/icons/clock1.png",
     "128": "src/assets/icons/clock1.png"
   },
-  "content_scripts": [{
-    "matches": ["<all_urls>"],
-    "js": ["src/floating/content_script.js"],
-    "run_at": "document_idle",
-    "all_frames": true,
-    "match_about_blank": true
-  }],
   "web_accessible_resources": [{
     "resources": [
-      "src/games/*",
-      "src/lib/*",
       "src/assets/*",
-      "src/floating/*"
+      "src/pages/*"
     ],
     "matches": ["<all_urls>"]
   }],
