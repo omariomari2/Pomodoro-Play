@@ -208,6 +208,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
   todoToggle.addEventListener('click', (e) => {
     e.stopPropagation(); // Prevent document click from immediately closing the panel
+    
+    // Force expand popup if it's minimized when opening tasks
+    if (body.classList.contains('minimized')) {
+      body.classList.remove('minimized');
+      toggleBtn.style.transform = 'rotate(0deg)';
+      // Store preference
+      chrome.storage.local.set({
+        isMinimized: false
+      });
+    }
+    
     todoList.classList.toggle('visible');
     
     // Focus on the input if the panel is visible
