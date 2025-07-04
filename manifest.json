@@ -8,7 +8,8 @@
     "storage",
     "alarms",
     "notifications",
-    "tabs"
+    "tabs",
+    "activeTab"
   ],
   "host_permissions": [
     "<all_urls>"
@@ -36,5 +37,13 @@
   }],
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self'"
-  }
-} 
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["src/content/floating-tasks.js"],
+      "css": ["src/content/floating-tasks.css"],
+      "run_at": "document_idle"
+    }
+  ]
+}

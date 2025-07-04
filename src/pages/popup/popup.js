@@ -241,42 +241,65 @@ document.addEventListener('DOMContentLoaded', () => {
   // Load existing tasks
   loadTasks();
 
+  // Notify other components about task updates
+  const notifyTaskUpdate = async () => {
+    const tasks = await new Promise(resolve => {
+      chrome.storage.local.get('tasks', result => resolve(result.tasks || []));
+    });
+    
+    // Notify background script about task updates
+    chrome.runtime.sendMessage({
+      type: 'UPDATE_TASKS',
+      tasks: tasks
+    }).catch(error => {
+      console.error('Error notifying task update:', error);
+    });
+  };
+
   // Add task on button click
-  addTaskButton.addEventListener('click', addTask);
+  addTaskButton.addEventListener('click', async () => {
+    const taskText = taskInput.value.trim();
+    if (taskText) {
+      const tasks = await new Promise(resolve => {
+        chrome.storage.local.get('tasks', result => resolve(result.tasks || []));
+      });
+      
+      const newTask = {
+        id: Date.now(),
+        text: taskText,
+        completed: false,
+        createdAt: new Date().toISOString()
+      };
+      
+      tasks.push(newTask);
+      await chrome.storage.local.set({ tasks });
+      taskInput.value = '';
+      await loadTasks();
+      
+      // Notify other components about the task update
+      chrome.runtime.sendMessage({
+        type: 'UPDATE_TASKS',
+        tasks: tasks
+      }).catch(error => {
+        console.error('Error notifying task update:', error);
+      });
+    }
+  });
 
   // Add task on Enter key
   taskInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
-      addTask();
+      addTaskButton.click();
     }
   });
 
-  function addTask() {
-    const taskText = taskInput.value.trim();
-    if (taskText === '') return;
-
-    const task = {
-      id: Date.now(),
-      text: taskText,
-      completed: false
-    };
-
-    // Save to storage and update UI
-    chrome.storage.sync.get(['tasks'], (result) => {
-      const tasks = result.tasks || [];
-      tasks.push(task);
-      chrome.storage.sync.set({ tasks }, () => {
-        createTaskElement(task);
-        taskInput.value = '';
-      });
+  async function loadTasks() {
+    const tasks = await new Promise(resolve => {
+      chrome.storage.local.get('tasks', result => resolve(result.tasks || []));
     });
-  }
-
-  function loadTasks() {
-    chrome.storage.sync.get(['tasks'], (result) => {
-      const tasks = result.tasks || [];
-      tasks.forEach(task => createTaskElement(task));
-    });
+    
+    tasksList.innerHTML = '';
+    tasks.forEach(task => createTaskElement(task));
   }
 
   function createTaskElement(task) {
@@ -303,24 +326,48 @@ document.addEventListener('DOMContentLoaded', () => {
     tasksList.appendChild(taskElement);
   }
 
-  function toggleTask(taskId) {
-    chrome.storage.sync.get(['tasks'], (result) => {
+  async function toggleTask(taskId) {
+    try {
+      // Get current tasks
+      const result = await new Promise(resolve => {
+        chrome.storage.local.get('tasks', resolve);
+      });
+      
       const tasks = result.tasks || [];
       const taskIndex = tasks.findIndex(t => t.id === taskId);
-      if (taskIndex > -1) {
-        // If task is being marked as completed
-        if (!tasks[taskIndex].completed) {
-          // Update stats when task is completed
-          updateTaskCompletionStats();
-        }
-        
-        tasks[taskIndex].completed = !tasks[taskIndex].completed;
-        chrome.storage.sync.set({ tasks }, () => {
-          const taskElement = document.querySelector(`[data-id="${taskId}"]`);
-          taskElement.classList.toggle('completed');
-        });
+      
+      if (taskIndex === -1) {
+        console.warn('Task not found:', taskId);
+        return;
       }
-    });
+      
+      // Toggle completion status
+      const wasCompleted = tasks[taskIndex].completed;
+      tasks[taskIndex].completed = !wasCompleted;
+      tasks[taskIndex].completedAt = tasks[taskIndex].completed ? new Date().toISOString() : undefined;
+      
+      // Update local storage
+      await new Promise(resolve => {
+        chrome.storage.local.set({ tasks }, resolve);
+      });
+      
+      // Update UI
+      await loadTasks();
+      
+      // Update stats if task was marked as completed
+      if (tasks[taskIndex].completed && !wasCompleted) {
+        updateTaskCompletionStats();
+      }
+      
+      // Notify other components about the task update
+      await chrome.runtime.sendMessage({
+        type: 'UPDATE_TASKS',
+        tasks: tasks
+      });
+      
+    } catch (error) {
+      console.error('Error toggling task:', error);
+    }
   }
 
   // Update task completion statistics
@@ -338,15 +385,39 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  function deleteTask(taskId) {
-    chrome.storage.sync.get(['tasks'], (result) => {
+  async function deleteTask(taskId) {
+    try {
+      // Get current tasks
+      const result = await new Promise(resolve => {
+        chrome.storage.local.get('tasks', resolve);
+      });
+      
       const tasks = result.tasks || [];
       const updatedTasks = tasks.filter(t => t.id !== taskId);
-      chrome.storage.sync.set({ tasks: updatedTasks }, () => {
-        const taskElement = document.querySelector(`[data-id="${taskId}"]`);
-        taskElement.remove();
+      
+      // Update local storage
+      await new Promise(resolve => {
+        chrome.storage.local.set({ tasks: updatedTasks }, resolve);
       });
-    });
+      
+      // Update UI
+      const taskElement = document.querySelector(`[data-id="${taskId}"]`);
+      if (taskElement) {
+        taskElement.remove();
+      }
+      
+      // Notify other components about the task update
+      await chrome.runtime.sendMessage({
+        type: 'UPDATE_TASKS',
+        tasks: updatedTasks
+      });
+      
+      // Reload tasks to ensure consistency
+      await loadTasks();
+      
+    } catch (error) {
+      console.error('Error deleting task:', error);
+    }
   }
 
   function initializeTimer() {

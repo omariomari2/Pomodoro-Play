@@ -14,6 +14,45 @@ let state = {
   totalCycles: 1
 };
 
+// Function to get all tabs and send them a message
+const notifyAllTabs = async (message) => {
+  try {
+    const tabs = await chrome.tabs.query({});
+    for (const tab of tabs) {
+      try {
+        await chrome.tabs.sendMessage(tab.id, message);
+      } catch (e) {
+        // Tab might not be listening for messages
+        if (!e.message.includes('Could not establish connection')) {
+          console.error('Error sending message to tab:', e);
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error in notifyAllTabs:', error);
+  }
+};
+
+// Function to notify all components about task updates
+const notifyTaskUpdate = async () => {
+  const tasks = (await chrome.storage.local.get('tasks')).tasks || [];
+  const message = { type: 'TASKS_UPDATED', tasks };
+  
+  // Notify all tabs
+  await notifyAllTabs(message);
+  
+  // Also notify the popup if it's open
+  try {
+    await chrome.runtime.sendMessage(message);
+  } catch (e) {
+    // Popup might not be open
+    if (!e.message.includes('Could not establish connection')) {
+      console.error('Error sending message to popup:', e);
+    }
+  }
+};
+
+// Listen for messages from popup and content scripts
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   console.log('Received message:', message);
   switch (message.type) {
@@ -49,6 +88,21 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     case 'START_BREAK':
       startBreakTimer();
       break;
+    case 'GET_TASKS':
+      chrome.storage.local.get('tasks', (result) => {
+        sendResponse({ tasks: result.tasks || [] });
+      });
+      return true; // Required for async sendResponse
+    case 'UPDATE_TASKS':
+      // Update tasks in storage
+      chrome.storage.local.set({ tasks: message.tasks }, async () => {
+        // Notify all components about the task update
+        await notifyTaskUpdate();
+        if (sendResponse) {
+          sendResponse({ success: true });
+        }
+      });
+      return true; // Required for async sendResponse
     case 'RESET_WORK':
       resetWorkTimer();
       break;
