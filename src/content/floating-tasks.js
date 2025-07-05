@@ -41,6 +41,10 @@ class FloatingTasks {
     this.taskPanel = document.createElement('div');
     this.taskPanel.id = 'pomodoro-task-panel';
     this.taskPanel.innerHTML = `
+      <div class="pomodoro-timer-header">
+        <div class="pomodoro-timer-display">25:00</div>
+        <div class="pomodoro-timer-type">Work</div>
+      </div>
       <div class="pomodoro-task-header">
         <h3>My Tasks</h3>
         <button id="pomodoro-close-panel">&times;</button>
@@ -50,11 +54,90 @@ class FloatingTasks {
       </div>
     `;
     
+    // Store timer elements
+    this.timerDisplay = this.taskPanel.querySelector('.pomodoro-timer-display');
+    this.timerTypeDisplay = this.taskPanel.querySelector('.pomodoro-timer-type');
+    
+    // Listen for timer updates
+    const handleMessage = (message) => {
+      console.log('Received message in floating tasks:', message);
+      if (message.type === 'TIMER_UPDATE') {
+        this.updateTimerDisplay({
+          timeLeft: message.timeLeft,
+          isPaused: message.isPaused,
+          currentTimer: message.currentTimer
+        });
+      } else if (message.type === 'TASKS_UPDATED') {
+        // Handle task updates if needed
+        this.tasks = message.tasks || [];
+        this.updateTaskList();
+      }
+    };
+    
+    // Add the message listener
+    chrome.runtime.onMessage.addListener(handleMessage);
+    
+    // Request current timer state
+    chrome.runtime.sendMessage({ type: 'GET_STATE' }, (response) => {
+      console.log('Received initial state in floating tasks:', response);
+      if (chrome.runtime.lastError) {
+        console.error('Error getting initial state:', chrome.runtime.lastError);
+        return;
+      }
+      
+      if (response) {
+        this.updateTimerDisplay({
+          timeLeft: response.timeLeft,
+          isPaused: response.isPaused,
+          currentTimer: response.currentTimer
+        });
+      } else {
+        // If no response, set default values
+        this.updateTimerDisplay({
+          timeLeft: 1500, // 25 minutes in seconds
+          isPaused: true,
+          currentTimer: 'work'
+        });
+      }
+    });
+    
     // Add to body
     document.body.appendChild(this.floatingButton);
     document.body.appendChild(this.taskPanel);
   }
 
+  updateTimerDisplay({ timeLeft, isPaused, currentTimer } = {}) {
+    if (!this.timerDisplay || !this.timerTypeDisplay) return;
+    
+    // Set default values if not provided
+    const safeTimeLeft = typeof timeLeft === 'number' ? Math.max(0, timeLeft) : 1500; // Default to 25:00 if not set
+    const safeIsPaused = Boolean(isPaused);
+    const safeCurrentTimer = currentTimer || 'work';
+    
+    // Format time
+    const minutes = Math.floor(safeTimeLeft / 60);
+    const seconds = safeTimeLeft % 60;
+    this.timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    
+    // Update timer type
+    let timerTypeText = 'Work';
+    if (safeCurrentTimer === 'break') timerTypeText = 'Break';
+    else if (safeCurrentTimer === 'transition') timerTypeText = 'Break Time';
+    
+    this.timerTypeDisplay.textContent = timerTypeText;
+    
+    // Update visual state
+    if (safeIsPaused) {
+      this.timerDisplay.classList.add('paused');
+      if (!this.timerTypeDisplay.textContent.includes('(Paused)')) {
+        this.timerTypeDisplay.textContent += ' (Paused)';
+      }
+    } else {
+      this.timerDisplay.classList.remove('paused');
+      this.timerTypeDisplay.textContent = this.timerTypeDisplay.textContent.replace(' (Paused)', '');
+    }
+  }
+  
   async loadTasks() {
     try {
       // Get tasks from background script

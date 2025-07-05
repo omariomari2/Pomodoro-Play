@@ -37,6 +37,41 @@
   background-color: #f44336;
 }
 
+/* Timer Header */
+.pomodoro-timer-header {
+  background: linear-gradient(135deg, #ff6b6b, #ff8e8e);
+  color: white;
+  padding: 12px 15px;
+  text-align: center;
+  border-radius: 10px 10px 0 0;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.pomodoro-timer-header:hover {
+  background: linear-gradient(135deg, #ff5252, #ff7b7b);
+}
+
+.pomodoro-timer-display {
+  font-size: 24px;
+  font-weight: bold;
+  letter-spacing: 1px;
+  margin-bottom: 4px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.pomodoro-timer-display.paused {
+  opacity: 0.8;
+}
+
+.pomodoro-timer-type {
+  font-size: 14px;
+  opacity: 0.9;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 500;
+}
+
 /* Task Panel */
 #pomodoro-task-panel {
   position: fixed;

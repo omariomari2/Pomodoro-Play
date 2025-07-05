@@ -177,24 +177,39 @@ function updateState(newState) {
     state = { ...state, ...newState };
   }
   
+  // Ensure we have valid values
+  state.timeLeft = typeof state.timeLeft === 'number' ? state.timeLeft : 0;
+  state.totalTime = typeof state.totalTime === 'number' ? state.totalTime : 0;
+  state.isPaused = Boolean(state.isPaused);
+  state.currentCycle = typeof state.currentCycle === 'number' ? state.currentCycle : 1;
+  state.totalCycles = typeof state.totalCycles === 'number' ? state.totalCycles : 1;
+  
   // Store state in local storage
   chrome.storage.local.set({
     timeLeft: state.timeLeft,
     totalTime: state.totalTime,
     isPaused: state.isPaused,
     currentCycle: state.currentCycle,
-    totalCycles: state.totalCycles
+    totalCycles: state.totalCycles,
+    currentTimer: state.currentTimer || 'work'
   });
   
-  // Send state update to popup
-  sendMessageToPopup({
+  // Create the update message
+  const updateMessage = {
     type: 'TIMER_UPDATE',
     timeLeft: state.timeLeft,
     totalTime: state.totalTime,
     isPaused: state.isPaused,
     currentCycle: state.currentCycle,
-    totalCycles: state.totalCycles
-  });
+    totalCycles: state.totalCycles,
+    currentTimer: state.currentTimer || 'work'
+  };
+  
+  // Send to popup
+  sendMessageToPopup(updateMessage);
+  
+  // Broadcast to all tabs (for floating task panel)
+  notifyAllTabs(updateMessage);
 }
 
 // Update startTimer function to use state
